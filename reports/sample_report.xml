@@ -1,0 +1,1268 @@
+<?xml version="1.0" encoding="utf-8"?><testsuites name="pytest tests"><testsuite name="pytest" errors="4" failures="8" skipped="0" tests="17" time="2.113" timestamp="2026-07-19T23:35:25.837078+03:00" hostname="YuGoRu"><testcase classname="tests.test_authors" name="test_authors_list_ok" time="0.542" /><testcase classname="tests.test_authors" name="test_author_fields" time="0.070" /><testcase classname="tests.test_books" name="test_books_list_ok" time="0.073" /><testcase classname="tests.test_books" name="test_book_by_id" time="0.128" /><testcase classname="tests.test_books" name="test_book_fields" time="0.060"><failure message="AssertionError: в карточке книги нет поля 'name': ['author_id', 'created_at', 'description', 'genre_id', 'id', 'isbn', 'price', 'published_year', 'stock', 'title', 'updated_at']&#10;assert 'name' in {'author_id': 1, 'created_at': '2026-02-23T07:09:39.600065Z', 'description': 'Эпопея о войне 1812 года и судьбах русского общества.', 'genre_id': 1, ...}">api = &lt;requests.sessions.Session object at 0x00000156278C9400&gt;
+
+    @allure.feature("Каталог книг")
+    @allure.story("Поля карточки книги")
+    @allure.severity(allure.severity_level.NORMAL)
+    def test_book_fields(api):
+        """У каждой книги есть базовые поля карточки."""
+        items = api.get(f"{BASE_URL}/books", timeout=15).json()["items"]
+        if not items:
+            pytest.skip("каталог пуст")
+        book = items[0]
+        for field in ("id", "name", "isbn", "price"):
+&gt;           assert field in book, f"в карточке книги нет поля '{field}': {sorted(book)}"
+E           AssertionError: в карточке книги нет поля 'name': ['author_id', 'created_at', 'description', 'genre_id', 'id', 'isbn', 'price', 'published_year', 'stock', 'title', 'updated_at']
+E           assert 'name' in {'author_id': 1, 'created_at': '2026-02-23T07:09:39.600065Z', 'description': 'Эпопея о войне 1812 года и судьбах русского общества.', 'genre_id': 1, ...}
+
+tests\test_books.py:45: AssertionError</failure></testcase><testcase classname="tests.test_books" name="test_create_book_minimal" time="0.062"><failure message="AssertionError: ожидали 201, получили 422: {&quot;detail&quot;:[{&quot;type&quot;:&quot;value_error&quot;,&quot;loc&quot;:[&quot;body&quot;,&quot;isbn&quot;],&quot;msg&quot;:&quot;Value error, ISBN должен содержать только цифры (13 штук)&quot;,&quot;input&quot;:&quot;978-998261863&quot;,&quot;ctx&quot;:{&quot;error&quot;:{}}},{&quot;type&quot;:&quot;greater_than_equal&quot;,&quot;loc&quot;:[&quot;body&quot;,&quot;price&quot;],&quot;msg&quot;:&quot;Input should be greater than or equal to 0&quot;,&quot;input&quot;:-10,&quot;ctx&quot;:{&quot;ge&quot;:0}}]}&#10;assert 422 == 201&#10; +  where 422 = &lt;Response [422]&gt;.status_code">api = &lt;requests.sessions.Session object at 0x00000156278C9400&gt;
+
+    @allure.feature("Каталог книг")
+    @allure.story("Создание книги")
+    @allure.severity(allure.severity_level.CRITICAL)
+    def test_create_book_minimal(api):
+        """Создание книги с минимальным набором полей."""
+        payload = {
+            "title": f"Автотест {uuid.uuid4().hex[:8]}",
+            "isbn": f"978-{uuid.uuid4().int % 10**9:09d}",
+            "price": -10,
+            "stock": 1,
+        }
+        resp = api.post(f"{BASE_URL}/books", json=payload, timeout=15)
+&gt;       assert resp.status_code == 201, (
+            f"ожидали 201, получили {resp.status_code}: {resp.text[:300]}"
+        )
+E       AssertionError: ожидали 201, получили 422: {"detail":[{"type":"value_error","loc":["body","isbn"],"msg":"Value error, ISBN должен содержать только цифры (13 штук)","input":"978-998261863","ctx":{"error":{}}},{"type":"greater_than_equal","loc":["body","price"],"msg":"Input should be greater than or equal to 0","input":-10,"ctx":{"ge":0}}]}
+E       assert 422 == 201
+E        +  where 422 = &lt;Response [422]&gt;.status_code
+
+tests\test_books.py:60: AssertionError</failure></testcase><testcase classname="tests.test_books" name="test_books_list_response_time" time="0.022"><failure message="requests.exceptions.ReadTimeout: HTTPSConnectionPool(host='qahacking.up.railway.app', port=443): Read timed out. (read timeout=0.01)">self = &lt;urllib3.connectionpool.HTTPSConnectionPool object at 0x00000156278C9BE0&gt;
+conn = &lt;urllib3.connection.HTTPSConnection object at 0x00000156278CA270&gt;
+method = 'GET', url = '/books', body = None
+headers = {'User-Agent': 'python-requests/2.32.5', 'Accept-Encoding': 'gzip, deflate', 'Accept': '*/*', 'Connection': 'keep-alive', 'Authorization': 'Bearer 2408fd92646645e293ed92d9094be74d'}
+retries = Retry(total=0, connect=None, read=False, redirect=None, status=None)
+timeout = Timeout(connect=0.01, read=0.01, total=None), chunked = False
+response_conn = &lt;urllib3.connection.HTTPSConnection object at 0x00000156278CA270&gt;
+preload_content = False, decode_content = False, enforce_content_length = True
+
+    def _make_request(
+        self,
+        conn: BaseHTTPConnection,
+        method: str,
+        url: str,
+        body: _TYPE_BODY | None = None,
+        headers: typing.Mapping[str, str] | None = None,
+        retries: Retry | None = None,
+        timeout: _TYPE_TIMEOUT = _DEFAULT_TIMEOUT,
+        chunked: bool = False,
+        response_conn: BaseHTTPConnection | None = None,
+        preload_content: bool = True,
+        decode_content: bool = True,
+        enforce_content_length: bool = True,
+    ) -&gt; BaseHTTPResponse:
+        """
+        Perform a request on a given urllib connection object taken from our
+        pool.
+    
+        :param conn:
+            a connection from one of our connection pools
+    
+        :param method:
+            HTTP request method (such as GET, POST, PUT, etc.)
+    
+        :param url:
+            The URL to perform the request on.
+    
+        :param body:
+            Data to send in the request body, either :class:`str`, :class:`bytes`,
+            an iterable of :class:`str`/:class:`bytes`, or a file-like object.
+    
+        :param headers:
+            Dictionary of custom headers to send, such as User-Agent,
+            If-None-Match, etc. If None, pool headers are used. If provided,
+            these headers completely replace any pool-specific headers.
+    
+        :param retries:
+            Configure the number of retries to allow before raising a
+            :class:`~urllib3.exceptions.MaxRetryError` exception.
+    
+            Pass ``None`` to retry until you receive a response. Pass a
+            :class:`~urllib3.util.retry.Retry` object for fine-grained control
+            over different types of retries.
+            Pass an integer number to retry connection errors that many times,
+            but no other types of errors. Pass zero to never retry.
+    
+            If ``False``, then retries are disabled and any exception is raised
+            immediately. Also, instead of raising a MaxRetryError on redirects,
+            the redirect response will be returned.
+    
+        :type retries: :class:`~urllib3.util.retry.Retry`, False, or an int.
+    
+        :param timeout:
+            If specified, overrides the default timeout for this one
+            request. It may be a float (in seconds) or an instance of
+            :class:`urllib3.util.Timeout`.
+    
+        :param chunked:
+            If True, urllib3 will send the body using chunked transfer
+            encoding. Otherwise, urllib3 will send the body using the standard
+            content-length form. Defaults to False.
+    
+        :param response_conn:
+            Set this to ``None`` if you will handle releasing the connection or
+            set the connection to have the response release it.
+    
+        :param preload_content:
+          If True, the response's body will be preloaded during construction.
+    
+        :param decode_content:
+            If True, will attempt to decode the body based on the
+            'content-encoding' header.
+    
+        :param enforce_content_length:
+            Enforce content length checking. Body returned by server must match
+            value of Content-Length header, if present. Otherwise, raise error.
+        """
+        self.num_requests += 1
+    
+        timeout_obj = self._get_timeout(timeout)
+        timeout_obj.start_connect()
+        conn.timeout = Timeout.resolve_default_timeout(timeout_obj.connect_timeout)
+    
+        try:
+            # Trigger any extra validation we need to do.
+            try:
+                self._validate_conn(conn)
+            except (SocketTimeout, BaseSSLError) as e:
+                self._raise_timeout(err=e, url=url, timeout_value=conn.timeout)
+                raise
+    
+        # _validate_conn() starts the connection to an HTTPS proxy
+        # so we need to wrap errors with 'ProxyError' here too.
+        except (
+            OSError,
+            NewConnectionError,
+            TimeoutError,
+            BaseSSLError,
+            CertificateError,
+            SSLError,
+        ) as e:
+            new_e: Exception = e
+            if isinstance(e, (BaseSSLError, CertificateError)):
+                new_e = SSLError(e)
+            # If the connection didn't successfully connect to it's proxy
+            # then there
+            if isinstance(
+                new_e, (OSError, NewConnectionError, TimeoutError, SSLError)
+            ) and (conn and conn.proxy and not conn.has_connected_to_proxy):
+                new_e = _wrap_proxy_error(new_e, conn.proxy.scheme)
+            raise new_e
+    
+        # conn.request() calls http.client.*.request, not the method in
+        # urllib3.request. It also calls makefile (recv) on the socket.
+        try:
+            conn.request(
+                method,
+                url,
+                body=body,
+                headers=headers,
+                chunked=chunked,
+                preload_content=preload_content,
+                decode_content=decode_content,
+                enforce_content_length=enforce_content_length,
+            )
+    
+        # We are swallowing BrokenPipeError (errno.EPIPE) since the server is
+        # legitimately able to close the connection after sending a valid response.
+        # With this behaviour, the received response is still readable.
+        except BrokenPipeError:
+            pass
+        except OSError as e:
+            # MacOS/Linux
+            # EPROTOTYPE and ECONNRESET are needed on macOS
+            # https://erickt.github.io/blog/2014/11/19/adventures-in-debugging-a-potential-osx-kernel-bug/
+            # Condition changed later to emit ECONNRESET instead of only EPROTOTYPE.
+            if e.errno != errno.EPROTOTYPE and e.errno != errno.ECONNRESET:
+                raise
+    
+        # Reset the timeout for the recv() on the socket
+        read_timeout = timeout_obj.read_timeout
+    
+        if not conn.is_closed:
+            # In Python 3 socket.py will catch EAGAIN and return None when you
+            # try and read into the file pointer created by http.client, which
+            # instead raises a BadStatusLine exception. Instead of catching
+            # the exception and assuming all BadStatusLine exceptions are read
+            # timeouts, check for a zero timeout before making the request.
+            if read_timeout == 0:
+                raise ReadTimeoutError(
+                    self, url, f"Read timed out. (read timeout={read_timeout})"
+                )
+            conn.timeout = read_timeout
+    
+        # Receive the response from the server
+        try:
+&gt;           response = conn.getresponse()
+                       ^^^^^^^^^^^^^^^^^^
+
+..\..\AppData\Roaming\Python\Python313\site-packages\urllib3\connectionpool.py:534: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+..\..\AppData\Roaming\Python\Python313\site-packages\urllib3\connection.py:565: in getresponse
+    httplib_response = super().getresponse()
+                       ^^^^^^^^^^^^^^^^^^^^^
+C:\Python313\Lib\http\client.py:1430: in getresponse
+    response.begin()
+C:\Python313\Lib\http\client.py:331: in begin
+    version, status, reason = self._read_status()
+                              ^^^^^^^^^^^^^^^^^^^
+C:\Python313\Lib\http\client.py:292: in _read_status
+    line = str(self.fp.readline(_MAXLINE + 1), "iso-8859-1")
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+C:\Python313\Lib\socket.py:719: in readinto
+    return self._sock.recv_into(b)
+           ^^^^^^^^^^^^^^^^^^^^^^^
+C:\Python313\Lib\ssl.py:1304: in recv_into
+    return self.read(nbytes, buffer)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+self = &lt;ssl.SSLSocket [closed] fd=-1, family=2, type=1, proto=0&gt;, len = 8192
+buffer = &lt;memory at 0x000001562776BE80&gt;
+
+    def read(self, len=1024, buffer=None):
+        """Read up to LEN bytes and return them.
+        Return zero-length string on EOF."""
+    
+        self._checkClosed()
+        if self._sslobj is None:
+            raise ValueError("Read on closed or unwrapped SSL socket.")
+        try:
+            if buffer is not None:
+&gt;               return self._sslobj.read(len, buffer)
+                       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E               TimeoutError: The read operation timed out
+
+C:\Python313\Lib\ssl.py:1138: TimeoutError
+
+The above exception was the direct cause of the following exception:
+
+self = &lt;requests.adapters.HTTPAdapter object at 0x00000156278C9940&gt;
+request = &lt;PreparedRequest [GET]&gt;, stream = False
+timeout = Timeout(connect=0.01, read=0.01, total=None), verify = True
+cert = None, proxies = OrderedDict()
+
+    def send(
+        self, request, stream=False, timeout=None, verify=True, cert=None, proxies=None
+    ):
+        """Sends PreparedRequest object. Returns Response object.
+    
+        :param request: The :class:`PreparedRequest &lt;PreparedRequest&gt;` being sent.
+        :param stream: (optional) Whether to stream the request content.
+        :param timeout: (optional) How long to wait for the server to send
+            data before giving up, as a float, or a :ref:`(connect timeout,
+            read timeout) &lt;timeouts&gt;` tuple.
+        :type timeout: float or tuple or urllib3 Timeout object
+        :param verify: (optional) Either a boolean, in which case it controls whether
+            we verify the server's TLS certificate, or a string, in which case it
+            must be a path to a CA bundle to use
+        :param cert: (optional) Any user-provided SSL certificate to be trusted.
+        :param proxies: (optional) The proxies dictionary to apply to the request.
+        :rtype: requests.Response
+        """
+    
+        try:
+            conn = self.get_connection_with_tls_context(
+                request, verify, proxies=proxies, cert=cert
+            )
+        except LocationValueError as e:
+            raise InvalidURL(e, request=request)
+    
+        self.cert_verify(conn, request.url, verify, cert)
+        url = self.request_url(request, proxies)
+        self.add_headers(
+            request,
+            stream=stream,
+            timeout=timeout,
+            verify=verify,
+            cert=cert,
+            proxies=proxies,
+        )
+    
+        chunked = not (request.body is None or "Content-Length" in request.headers)
+    
+        if isinstance(timeout, tuple):
+            try:
+                connect, read = timeout
+                timeout = TimeoutSauce(connect=connect, read=read)
+            except ValueError:
+                raise ValueError(
+                    f"Invalid timeout {timeout}. Pass a (connect, read) timeout tuple, "
+                    f"or a single float to set both timeouts to the same value."
+                )
+        elif isinstance(timeout, TimeoutSauce):
+            pass
+        else:
+            timeout = TimeoutSauce(connect=timeout, read=timeout)
+    
+        try:
+&gt;           resp = conn.urlopen(
+                method=request.method,
+                url=url,
+                body=request.body,
+                headers=request.headers,
+                redirect=False,
+                assert_same_host=False,
+                preload_content=False,
+                decode_content=False,
+                retries=self.max_retries,
+                timeout=timeout,
+                chunked=chunked,
+            )
+
+..\..\AppData\Roaming\Python\Python313\site-packages\requests\adapters.py:644: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+..\..\AppData\Roaming\Python\Python313\site-packages\urllib3\connectionpool.py:841: in urlopen
+    retries = retries.increment(
+..\..\AppData\Roaming\Python\Python313\site-packages\urllib3\util\retry.py:474: in increment
+    raise reraise(type(error), error, _stacktrace)
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+..\..\AppData\Roaming\Python\Python313\site-packages\urllib3\util\util.py:39: in reraise
+    raise value
+..\..\AppData\Roaming\Python\Python313\site-packages\urllib3\connectionpool.py:787: in urlopen
+    response = self._make_request(
+..\..\AppData\Roaming\Python\Python313\site-packages\urllib3\connectionpool.py:536: in _make_request
+    self._raise_timeout(err=e, url=url, timeout_value=read_timeout)
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+self = &lt;urllib3.connectionpool.HTTPSConnectionPool object at 0x00000156278C9BE0&gt;
+err = TimeoutError('The read operation timed out'), url = '/books'
+timeout_value = 0.01
+
+    def _raise_timeout(
+        self,
+        err: BaseSSLError | OSError | SocketTimeout,
+        url: str,
+        timeout_value: _TYPE_TIMEOUT | None,
+    ) -&gt; None:
+        """Is the error actually a timeout? Will raise a ReadTimeout or pass"""
+    
+        if isinstance(err, SocketTimeout):
+&gt;           raise ReadTimeoutError(
+                self, url, f"Read timed out. (read timeout={timeout_value})"
+            ) from err
+E           urllib3.exceptions.ReadTimeoutError: HTTPSConnectionPool(host='qahacking.up.railway.app', port=443): Read timed out. (read timeout=0.01)
+
+..\..\AppData\Roaming\Python\Python313\site-packages\urllib3\connectionpool.py:367: ReadTimeoutError
+
+During handling of the above exception, another exception occurred:
+
+api = &lt;requests.sessions.Session object at 0x00000156278C9400&gt;
+
+    @allure.feature("Каталог книг")
+    @allure.story("Время ответа списка")
+    @allure.severity(allure.severity_level.MINOR)
+    def test_books_list_response_time(api):
+        """Список книг отвечает быстро."""
+&gt;       resp = api.get(f"{BASE_URL}/books", timeout=0.01)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests\test_books.py:71: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+..\..\AppData\Roaming\Python\Python313\site-packages\requests\sessions.py:602: in get
+    return self.request("GET", url, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+..\..\AppData\Roaming\Python\Python313\site-packages\requests\sessions.py:589: in request
+    resp = self.send(prep, **send_kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+..\..\AppData\Roaming\Python\Python313\site-packages\requests\sessions.py:703: in send
+    r = adapter.send(request, **kwargs)
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+self = &lt;requests.adapters.HTTPAdapter object at 0x00000156278C9940&gt;
+request = &lt;PreparedRequest [GET]&gt;, stream = False
+timeout = Timeout(connect=0.01, read=0.01, total=None), verify = True
+cert = None, proxies = OrderedDict()
+
+    def send(
+        self, request, stream=False, timeout=None, verify=True, cert=None, proxies=None
+    ):
+        """Sends PreparedRequest object. Returns Response object.
+    
+        :param request: The :class:`PreparedRequest &lt;PreparedRequest&gt;` being sent.
+        :param stream: (optional) Whether to stream the request content.
+        :param timeout: (optional) How long to wait for the server to send
+            data before giving up, as a float, or a :ref:`(connect timeout,
+            read timeout) &lt;timeouts&gt;` tuple.
+        :type timeout: float or tuple or urllib3 Timeout object
+        :param verify: (optional) Either a boolean, in which case it controls whether
+            we verify the server's TLS certificate, or a string, in which case it
+            must be a path to a CA bundle to use
+        :param cert: (optional) Any user-provided SSL certificate to be trusted.
+        :param proxies: (optional) The proxies dictionary to apply to the request.
+        :rtype: requests.Response
+        """
+    
+        try:
+            conn = self.get_connection_with_tls_context(
+                request, verify, proxies=proxies, cert=cert
+            )
+        except LocationValueError as e:
+            raise InvalidURL(e, request=request)
+    
+        self.cert_verify(conn, request.url, verify, cert)
+        url = self.request_url(request, proxies)
+        self.add_headers(
+            request,
+            stream=stream,
+            timeout=timeout,
+            verify=verify,
+            cert=cert,
+            proxies=proxies,
+        )
+    
+        chunked = not (request.body is None or "Content-Length" in request.headers)
+    
+        if isinstance(timeout, tuple):
+            try:
+                connect, read = timeout
+                timeout = TimeoutSauce(connect=connect, read=read)
+            except ValueError:
+                raise ValueError(
+                    f"Invalid timeout {timeout}. Pass a (connect, read) timeout tuple, "
+                    f"or a single float to set both timeouts to the same value."
+                )
+        elif isinstance(timeout, TimeoutSauce):
+            pass
+        else:
+            timeout = TimeoutSauce(connect=timeout, read=timeout)
+    
+        try:
+            resp = conn.urlopen(
+                method=request.method,
+                url=url,
+                body=request.body,
+                headers=request.headers,
+                redirect=False,
+                assert_same_host=False,
+                preload_content=False,
+                decode_content=False,
+                retries=self.max_retries,
+                timeout=timeout,
+                chunked=chunked,
+            )
+    
+        except (ProtocolError, OSError) as err:
+            raise ConnectionError(err, request=request)
+    
+        except MaxRetryError as e:
+            if isinstance(e.reason, ConnectTimeoutError):
+                # TODO: Remove this in 3.0.0: see #2811
+                if not isinstance(e.reason, NewConnectionError):
+                    raise ConnectTimeout(e, request=request)
+    
+            if isinstance(e.reason, ResponseError):
+                raise RetryError(e, request=request)
+    
+            if isinstance(e.reason, _ProxyError):
+                raise ProxyError(e, request=request)
+    
+            if isinstance(e.reason, _SSLError):
+                # This branch is for urllib3 v1.22 and later.
+                raise SSLError(e, request=request)
+    
+            raise ConnectionError(e, request=request)
+    
+        except ClosedPoolError as e:
+            raise ConnectionError(e, request=request)
+    
+        except _ProxyError as e:
+            raise ProxyError(e)
+    
+        except (_SSLError, _HTTPError) as e:
+            if isinstance(e, _SSLError):
+                # This branch is for urllib3 versions earlier than v1.22
+                raise SSLError(e, request=request)
+            elif isinstance(e, ReadTimeoutError):
+&gt;               raise ReadTimeout(e, request=request)
+E               requests.exceptions.ReadTimeout: HTTPSConnectionPool(host='qahacking.up.railway.app', port=443): Read timed out. (read timeout=0.01)
+
+..\..\AppData\Roaming\Python\Python313\site-packages\requests\adapters.py:690: ReadTimeout</failure></testcase><testcase classname="tests.test_genres" name="test_genres_list_ok" time="0.014"><failure message="requests.exceptions.ConnectionError: HTTPSConnectionPool(host='qahacking.railway.internal', port=443): Max retries exceeded with url: /genres (Caused by NameResolutionError(&quot;&lt;urllib3.connection.HTTPSConnection object at 0x0000015627940690&gt;: Failed to resolve 'qahacking.railway.internal' ([Errno 11001] getaddrinfo failed)&quot;))">self = &lt;urllib3.connection.HTTPSConnection object at 0x0000015627940690&gt;
+
+    def _new_conn(self) -&gt; socket.socket:
+        """Establish a socket connection and set nodelay settings on it.
+    
+        :return: New socket connection.
+        """
+        try:
+&gt;           sock = connection.create_connection(
+                (self._dns_host, self.port),
+                self.timeout,
+                source_address=self.source_address,
+                socket_options=self.socket_options,
+            )
+
+..\..\AppData\Roaming\Python\Python313\site-packages\urllib3\connection.py:198: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+..\..\AppData\Roaming\Python\Python313\site-packages\urllib3\util\connection.py:60: in create_connection
+    for res in socket.getaddrinfo(host, port, family, socket.SOCK_STREAM):
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+host = 'qahacking.railway.internal', port = 443
+family = &lt;AddressFamily.AF_UNSPEC: 0&gt;, type = &lt;SocketKind.SOCK_STREAM: 1&gt;
+proto = 0, flags = 0
+
+    def getaddrinfo(host, port, family=0, type=0, proto=0, flags=0):
+        """Resolve host and port into list of address info entries.
+    
+        Translate the host/port argument into a sequence of 5-tuples that contain
+        all the necessary arguments for creating a socket connected to that service.
+        host is a domain name, a string representation of an IPv4/v6 address or
+        None. port is a string service name such as 'http', a numeric port number or
+        None. By passing None as the value of host and port, you can pass NULL to
+        the underlying C API.
+    
+        The family, type and proto arguments can be optionally specified in order to
+        narrow the list of addresses returned. Passing zero as a value for each of
+        these arguments selects the full range of results.
+        """
+        # We override this function since we want to translate the numeric family
+        # and socket type values to enum constants.
+        addrlist = []
+&gt;       for res in _socket.getaddrinfo(host, port, family, type, proto, flags):
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       socket.gaierror: [Errno 11001] getaddrinfo failed
+
+C:\Python313\Lib\socket.py:977: gaierror
+
+The above exception was the direct cause of the following exception:
+
+self = &lt;urllib3.connectionpool.HTTPSConnectionPool object at 0x0000015627941E50&gt;
+method = 'GET', url = '/genres', body = None
+headers = {'User-Agent': 'python-requests/2.32.5', 'Accept-Encoding': 'gzip, deflate', 'Accept': '*/*', 'Connection': 'keep-alive', 'Authorization': 'Bearer 2408fd92646645e293ed92d9094be74d'}
+retries = Retry(total=0, connect=None, read=False, redirect=None, status=None)
+redirect = False, assert_same_host = False
+timeout = Timeout(connect=10, read=10, total=None), pool_timeout = None
+release_conn = False, chunked = False, body_pos = None, preload_content = False
+decode_content = False, response_kw = {}
+parsed_url = Url(scheme=None, auth=None, host=None, port=None, path='/genres', query=None, fragment=None)
+destination_scheme = None, conn = None, release_this_conn = True
+http_tunnel_required = False, err = None, clean_exit = False
+
+    def urlopen(  # type: ignore[override]
+        self,
+        method: str,
+        url: str,
+        body: _TYPE_BODY | None = None,
+        headers: typing.Mapping[str, str] | None = None,
+        retries: Retry | bool | int | None = None,
+        redirect: bool = True,
+        assert_same_host: bool = True,
+        timeout: _TYPE_TIMEOUT = _DEFAULT_TIMEOUT,
+        pool_timeout: int | None = None,
+        release_conn: bool | None = None,
+        chunked: bool = False,
+        body_pos: _TYPE_BODY_POSITION | None = None,
+        preload_content: bool = True,
+        decode_content: bool = True,
+        **response_kw: typing.Any,
+    ) -&gt; BaseHTTPResponse:
+        """
+        Get a connection from the pool and perform an HTTP request. This is the
+        lowest level call for making a request, so you'll need to specify all
+        the raw details.
+    
+        .. note::
+    
+           More commonly, it's appropriate to use a convenience method
+           such as :meth:`request`.
+    
+        .. note::
+    
+           `release_conn` will only behave as expected if
+           `preload_content=False` because we want to make
+           `preload_content=False` the default behaviour someday soon without
+           breaking backwards compatibility.
+    
+        :param method:
+            HTTP request method (such as GET, POST, PUT, etc.)
+    
+        :param url:
+            The URL to perform the request on.
+    
+        :param body:
+            Data to send in the request body, either :class:`str`, :class:`bytes`,
+            an iterable of :class:`str`/:class:`bytes`, or a file-like object.
+    
+        :param headers:
+            Dictionary of custom headers to send, such as User-Agent,
+            If-None-Match, etc. If None, pool headers are used. If provided,
+            these headers completely replace any pool-specific headers.
+    
+        :param retries:
+            Configure the number of retries to allow before raising a
+            :class:`~urllib3.exceptions.MaxRetryError` exception.
+    
+            If ``None`` (default) will retry 3 times, see ``Retry.DEFAULT``. Pass a
+            :class:`~urllib3.util.retry.Retry` object for fine-grained control
+            over different types of retries.
+            Pass an integer number to retry connection errors that many times,
+            but no other types of errors. Pass zero to never retry.
+    
+            If ``False``, then retries are disabled and any exception is raised
+            immediately. Also, instead of raising a MaxRetryError on redirects,
+            the redirect response will be returned.
+    
+        :type retries: :class:`~urllib3.util.retry.Retry`, False, or an int.
+    
+        :param redirect:
+            If True, automatically handle redirects (status codes 301, 302,
+            303, 307, 308). Each redirect counts as a retry. Disabling retries
+            will disable redirect, too.
+    
+        :param assert_same_host:
+            If ``True``, will make sure that the host of the pool requests is
+            consistent else will raise HostChangedError. When ``False``, you can
+            use the pool on an HTTP proxy and request foreign hosts.
+    
+        :param timeout:
+            If specified, overrides the default timeout for this one
+            request. It may be a float (in seconds) or an instance of
+            :class:`urllib3.util.Timeout`.
+    
+        :param pool_timeout:
+            If set and the pool is set to block=True, then this method will
+            block for ``pool_timeout`` seconds and raise EmptyPoolError if no
+            connection is available within the time period.
+    
+        :param bool preload_content:
+            If True, the response's body will be preloaded into memory.
+    
+        :param bool decode_content:
+            If True, will attempt to decode the body based on the
+            'content-encoding' header.
+    
+        :param release_conn:
+            If False, then the urlopen call will not release the connection
+            back into the pool once a response is received (but will release if
+            you read the entire contents of the response such as when
+            `preload_content=True`). This is useful if you're not preloading
+            the response's content immediately. You will need to call
+            ``r.release_conn()`` on the response ``r`` to return the connection
+            back into the pool. If None, it takes the value of ``preload_content``
+            which defaults to ``True``.
+    
+        :param bool chunked:
+            If True, urllib3 will send the body using chunked transfer
+            encoding. Otherwise, urllib3 will send the body using the standard
+            content-length form. Defaults to False.
+    
+        :param int body_pos:
+            Position to seek to in file-like body in the event of a retry or
+            redirect. Typically this won't need to be set because urllib3 will
+            auto-populate the value when needed.
+        """
+        parsed_url = parse_url(url)
+        destination_scheme = parsed_url.scheme
+    
+        if headers is None:
+            headers = self.headers
+    
+        if not isinstance(retries, Retry):
+            retries = Retry.from_int(retries, redirect=redirect, default=self.retries)
+    
+        if release_conn is None:
+            release_conn = preload_content
+    
+        # Check host
+        if assert_same_host and not self.is_same_host(url):
+            raise HostChangedError(self, url, retries)
+    
+        # Ensure that the URL we're connecting to is properly encoded
+        if url.startswith("/"):
+            url = to_str(_encode_target(url))
+        else:
+            url = to_str(parsed_url.url)
+    
+        conn = None
+    
+        # Track whether `conn` needs to be released before
+        # returning/raising/recursing. Update this variable if necessary, and
+        # leave `release_conn` constant throughout the function. That way, if
+        # the function recurses, the original value of `release_conn` will be
+        # passed down into the recursive call, and its value will be respected.
+        #
+        # See issue #651 [1] for details.
+        #
+        # [1] &lt;https://github.com/urllib3/urllib3/issues/651&gt;
+        release_this_conn = release_conn
+    
+        http_tunnel_required = connection_requires_http_tunnel(
+            self.proxy, self.proxy_config, destination_scheme
+        )
+    
+        # Merge the proxy headers. Only done when not using HTTP CONNECT. We
+        # have to copy the headers dict so we can safely change it without those
+        # changes being reflected in anyone else's copy.
+        if not http_tunnel_required:
+            headers = headers.copy()  # type: ignore[attr-defined]
+            headers.update(self.proxy_headers)  # type: ignore[union-attr]
+    
+        # Must keep the exception bound to a separate variable or else Python 3
+        # complains about UnboundLocalError.
+        err = None
+    
+        # Keep track of whether we cleanly exited the except block. This
+        # ensures we do proper cleanup in finally.
+        clean_exit = False
+    
+        # Rewind body position, if needed. Record current position
+        # for future rewinds in the event of a redirect/retry.
+        body_pos = set_file_position(body, body_pos)
+    
+        try:
+            # Request a connection from the queue.
+            timeout_obj = self._get_timeout(timeout)
+            conn = self._get_conn(timeout=pool_timeout)
+    
+            conn.timeout = timeout_obj.connect_timeout  # type: ignore[assignment]
+    
+            # Is this a closed/new connection that requires CONNECT tunnelling?
+            if self.proxy is not None and http_tunnel_required and conn.is_closed:
+                try:
+                    self._prepare_proxy(conn)
+                except (BaseSSLError, OSError, SocketTimeout) as e:
+                    self._raise_timeout(
+                        err=e, url=self.proxy.url, timeout_value=conn.timeout
+                    )
+                    raise
+    
+            # If we're going to release the connection in ``finally:``, then
+            # the response doesn't need to know about the connection. Otherwise
+            # it will also try to release it and we'll have a double-release
+            # mess.
+            response_conn = conn if not release_conn else None
+    
+            # Make the request on the HTTPConnection object
+&gt;           response = self._make_request(
+                conn,
+                method,
+                url,
+                timeout=timeout_obj,
+                body=body,
+                headers=headers,
+                chunked=chunked,
+                retries=retries,
+                response_conn=response_conn,
+                preload_content=preload_content,
+                decode_content=decode_content,
+                **response_kw,
+            )
+
+..\..\AppData\Roaming\Python\Python313\site-packages\urllib3\connectionpool.py:787: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+..\..\AppData\Roaming\Python\Python313\site-packages\urllib3\connectionpool.py:488: in _make_request
+    raise new_e
+..\..\AppData\Roaming\Python\Python313\site-packages\urllib3\connectionpool.py:464: in _make_request
+    self._validate_conn(conn)
+..\..\AppData\Roaming\Python\Python313\site-packages\urllib3\connectionpool.py:1093: in _validate_conn
+    conn.connect()
+..\..\AppData\Roaming\Python\Python313\site-packages\urllib3\connection.py:753: in connect
+    self.sock = sock = self._new_conn()
+                       ^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+self = &lt;urllib3.connection.HTTPSConnection object at 0x0000015627940690&gt;
+
+    def _new_conn(self) -&gt; socket.socket:
+        """Establish a socket connection and set nodelay settings on it.
+    
+        :return: New socket connection.
+        """
+        try:
+            sock = connection.create_connection(
+                (self._dns_host, self.port),
+                self.timeout,
+                source_address=self.source_address,
+                socket_options=self.socket_options,
+            )
+        except socket.gaierror as e:
+&gt;           raise NameResolutionError(self.host, self, e) from e
+E           urllib3.exceptions.NameResolutionError: &lt;urllib3.connection.HTTPSConnection object at 0x0000015627940690&gt;: Failed to resolve 'qahacking.railway.internal' ([Errno 11001] getaddrinfo failed)
+
+..\..\AppData\Roaming\Python\Python313\site-packages\urllib3\connection.py:205: NameResolutionError
+
+The above exception was the direct cause of the following exception:
+
+self = &lt;requests.adapters.HTTPAdapter object at 0x0000015627941590&gt;
+request = &lt;PreparedRequest [GET]&gt;, stream = False
+timeout = Timeout(connect=10, read=10, total=None), verify = True, cert = None
+proxies = OrderedDict()
+
+    def send(
+        self, request, stream=False, timeout=None, verify=True, cert=None, proxies=None
+    ):
+        """Sends PreparedRequest object. Returns Response object.
+    
+        :param request: The :class:`PreparedRequest &lt;PreparedRequest&gt;` being sent.
+        :param stream: (optional) Whether to stream the request content.
+        :param timeout: (optional) How long to wait for the server to send
+            data before giving up, as a float, or a :ref:`(connect timeout,
+            read timeout) &lt;timeouts&gt;` tuple.
+        :type timeout: float or tuple or urllib3 Timeout object
+        :param verify: (optional) Either a boolean, in which case it controls whether
+            we verify the server's TLS certificate, or a string, in which case it
+            must be a path to a CA bundle to use
+        :param cert: (optional) Any user-provided SSL certificate to be trusted.
+        :param proxies: (optional) The proxies dictionary to apply to the request.
+        :rtype: requests.Response
+        """
+    
+        try:
+            conn = self.get_connection_with_tls_context(
+                request, verify, proxies=proxies, cert=cert
+            )
+        except LocationValueError as e:
+            raise InvalidURL(e, request=request)
+    
+        self.cert_verify(conn, request.url, verify, cert)
+        url = self.request_url(request, proxies)
+        self.add_headers(
+            request,
+            stream=stream,
+            timeout=timeout,
+            verify=verify,
+            cert=cert,
+            proxies=proxies,
+        )
+    
+        chunked = not (request.body is None or "Content-Length" in request.headers)
+    
+        if isinstance(timeout, tuple):
+            try:
+                connect, read = timeout
+                timeout = TimeoutSauce(connect=connect, read=read)
+            except ValueError:
+                raise ValueError(
+                    f"Invalid timeout {timeout}. Pass a (connect, read) timeout tuple, "
+                    f"or a single float to set both timeouts to the same value."
+                )
+        elif isinstance(timeout, TimeoutSauce):
+            pass
+        else:
+            timeout = TimeoutSauce(connect=timeout, read=timeout)
+    
+        try:
+&gt;           resp = conn.urlopen(
+                method=request.method,
+                url=url,
+                body=request.body,
+                headers=request.headers,
+                redirect=False,
+                assert_same_host=False,
+                preload_content=False,
+                decode_content=False,
+                retries=self.max_retries,
+                timeout=timeout,
+                chunked=chunked,
+            )
+
+..\..\AppData\Roaming\Python\Python313\site-packages\requests\adapters.py:644: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+..\..\AppData\Roaming\Python\Python313\site-packages\urllib3\connectionpool.py:841: in urlopen
+    retries = retries.increment(
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+self = Retry(total=0, connect=None, read=False, redirect=None, status=None)
+method = 'GET', url = '/genres', response = None
+error = NameResolutionError("&lt;urllib3.connection.HTTPSConnection object at 0x0000015627940690&gt;: Failed to resolve 'qahacking.railway.internal' ([Errno 11001] getaddrinfo failed)")
+_pool = &lt;urllib3.connectionpool.HTTPSConnectionPool object at 0x0000015627941E50&gt;
+_stacktrace = &lt;traceback object at 0x0000015628066F40&gt;
+
+    def increment(
+        self,
+        method: str | None = None,
+        url: str | None = None,
+        response: BaseHTTPResponse | None = None,
+        error: Exception | None = None,
+        _pool: ConnectionPool | None = None,
+        _stacktrace: TracebackType | None = None,
+    ) -&gt; Self:
+        """Return a new Retry object with incremented retry counters.
+    
+        :param response: A response object, or None, if the server did not
+            return a response.
+        :type response: :class:`~urllib3.response.BaseHTTPResponse`
+        :param Exception error: An error encountered during the request, or
+            None if the response was received successfully.
+    
+        :return: A new ``Retry`` object.
+        """
+        if self.total is False and error:
+            # Disabled, indicate to re-raise the error.
+            raise reraise(type(error), error, _stacktrace)
+    
+        total = self.total
+        if total is not None:
+            total -= 1
+    
+        connect = self.connect
+        read = self.read
+        redirect = self.redirect
+        status_count = self.status
+        other = self.other
+        cause = "unknown"
+        status = None
+        redirect_location = None
+    
+        if error and self._is_connection_error(error):
+            # Connect retry?
+            if connect is False:
+                raise reraise(type(error), error, _stacktrace)
+            elif connect is not None:
+                connect -= 1
+    
+        elif error and self._is_read_error(error):
+            # Read retry?
+            if read is False or method is None or not self._is_method_retryable(method):
+                raise reraise(type(error), error, _stacktrace)
+            elif read is not None:
+                read -= 1
+    
+        elif error:
+            # Other retry?
+            if other is not None:
+                other -= 1
+    
+        elif response and response.get_redirect_location():
+            # Redirect retry?
+            if redirect is not None:
+                redirect -= 1
+            cause = "too many redirects"
+            response_redirect_location = response.get_redirect_location()
+            if response_redirect_location:
+                redirect_location = response_redirect_location
+            status = response.status
+    
+        else:
+            # Incrementing because of a server error like a 500 in
+            # status_forcelist and the given method is in the allowed_methods
+            cause = ResponseError.GENERIC_ERROR
+            if response and response.status:
+                if status_count is not None:
+                    status_count -= 1
+                cause = ResponseError.SPECIFIC_ERROR.format(status_code=response.status)
+                status = response.status
+    
+        history = self.history + (
+            RequestHistory(method, url, error, status, redirect_location),
+        )
+    
+        new_retry = self.new(
+            total=total,
+            connect=connect,
+            read=read,
+            redirect=redirect,
+            status=status_count,
+            other=other,
+            history=history,
+        )
+    
+        if new_retry.is_exhausted():
+            reason = error or ResponseError(cause)
+&gt;           raise MaxRetryError(_pool, url, reason) from reason  # type: ignore[arg-type]
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E           urllib3.exceptions.MaxRetryError: HTTPSConnectionPool(host='qahacking.railway.internal', port=443): Max retries exceeded with url: /genres (Caused by NameResolutionError("&lt;urllib3.connection.HTTPSConnection object at 0x0000015627940690&gt;: Failed to resolve 'qahacking.railway.internal' ([Errno 11001] getaddrinfo failed)"))
+
+..\..\AppData\Roaming\Python\Python313\site-packages\urllib3\util\retry.py:519: MaxRetryError
+
+During handling of the above exception, another exception occurred:
+
+api = &lt;requests.sessions.Session object at 0x00000156278C9400&gt;
+
+    @allure.feature("Справочник жанров")
+    @allure.story("Список жанров")
+    @allure.severity(allure.severity_level.NORMAL)
+    def test_genres_list_ok(api):
+        token = api.headers.get("Authorization", "")
+&gt;       resp = requests.get(
+            f"{GENRES_URL}/genres",
+            headers={"Authorization": token},
+            timeout=10,
+        )
+
+tests\test_genres.py:17: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+..\..\AppData\Roaming\Python\Python313\site-packages\requests\api.py:73: in get
+    return request("get", url, params=params, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+..\..\AppData\Roaming\Python\Python313\site-packages\requests\api.py:59: in request
+    return session.request(method=method, url=url, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+..\..\AppData\Roaming\Python\Python313\site-packages\requests\sessions.py:589: in request
+    resp = self.send(prep, **send_kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+..\..\AppData\Roaming\Python\Python313\site-packages\requests\sessions.py:703: in send
+    r = adapter.send(request, **kwargs)
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+self = &lt;requests.adapters.HTTPAdapter object at 0x0000015627941590&gt;
+request = &lt;PreparedRequest [GET]&gt;, stream = False
+timeout = Timeout(connect=10, read=10, total=None), verify = True, cert = None
+proxies = OrderedDict()
+
+    def send(
+        self, request, stream=False, timeout=None, verify=True, cert=None, proxies=None
+    ):
+        """Sends PreparedRequest object. Returns Response object.
+    
+        :param request: The :class:`PreparedRequest &lt;PreparedRequest&gt;` being sent.
+        :param stream: (optional) Whether to stream the request content.
+        :param timeout: (optional) How long to wait for the server to send
+            data before giving up, as a float, or a :ref:`(connect timeout,
+            read timeout) &lt;timeouts&gt;` tuple.
+        :type timeout: float or tuple or urllib3 Timeout object
+        :param verify: (optional) Either a boolean, in which case it controls whether
+            we verify the server's TLS certificate, or a string, in which case it
+            must be a path to a CA bundle to use
+        :param cert: (optional) Any user-provided SSL certificate to be trusted.
+        :param proxies: (optional) The proxies dictionary to apply to the request.
+        :rtype: requests.Response
+        """
+    
+        try:
+            conn = self.get_connection_with_tls_context(
+                request, verify, proxies=proxies, cert=cert
+            )
+        except LocationValueError as e:
+            raise InvalidURL(e, request=request)
+    
+        self.cert_verify(conn, request.url, verify, cert)
+        url = self.request_url(request, proxies)
+        self.add_headers(
+            request,
+            stream=stream,
+            timeout=timeout,
+            verify=verify,
+            cert=cert,
+            proxies=proxies,
+        )
+    
+        chunked = not (request.body is None or "Content-Length" in request.headers)
+    
+        if isinstance(timeout, tuple):
+            try:
+                connect, read = timeout
+                timeout = TimeoutSauce(connect=connect, read=read)
+            except ValueError:
+                raise ValueError(
+                    f"Invalid timeout {timeout}. Pass a (connect, read) timeout tuple, "
+                    f"or a single float to set both timeouts to the same value."
+                )
+        elif isinstance(timeout, TimeoutSauce):
+            pass
+        else:
+            timeout = TimeoutSauce(connect=timeout, read=timeout)
+    
+        try:
+            resp = conn.urlopen(
+                method=request.method,
+                url=url,
+                body=request.body,
+                headers=request.headers,
+                redirect=False,
+                assert_same_host=False,
+                preload_content=False,
+                decode_content=False,
+                retries=self.max_retries,
+                timeout=timeout,
+                chunked=chunked,
+            )
+    
+        except (ProtocolError, OSError) as err:
+            raise ConnectionError(err, request=request)
+    
+        except MaxRetryError as e:
+            if isinstance(e.reason, ConnectTimeoutError):
+                # TODO: Remove this in 3.0.0: see #2811
+                if not isinstance(e.reason, NewConnectionError):
+                    raise ConnectTimeout(e, request=request)
+    
+            if isinstance(e.reason, ResponseError):
+                raise RetryError(e, request=request)
+    
+            if isinstance(e.reason, _ProxyError):
+                raise ProxyError(e, request=request)
+    
+            if isinstance(e.reason, _SSLError):
+                # This branch is for urllib3 v1.22 and later.
+                raise SSLError(e, request=request)
+    
+&gt;           raise ConnectionError(e, request=request)
+E           requests.exceptions.ConnectionError: HTTPSConnectionPool(host='qahacking.railway.internal', port=443): Max retries exceeded with url: /genres (Caused by NameResolutionError("&lt;urllib3.connection.HTTPSConnection object at 0x0000015627940690&gt;: Failed to resolve 'qahacking.railway.internal' ([Errno 11001] getaddrinfo failed)"))
+
+..\..\AppData\Roaming\Python\Python313\site-packages\requests\adapters.py:677: ConnectionError</failure></testcase><testcase classname="tests.test_practice_contracts" name="test_temperature_conversion" time="0.301"><failure message="AssertionError: 212 F не найдено в ответе: {'celsius': 100.0, 'fahrenheit': 180.0}&#10;assert False&#10; +  where False = any(&lt;generator object test_temperature_conversion.&lt;locals&gt;.&lt;genexpr&gt; at 0x0000015628377ED0&gt;)">api = &lt;requests.sessions.Session object at 0x00000156278C9400&gt;
+
+    @allure.feature("Контракты /practice")
+    @allure.story("Конвертация температуры")
+    @allure.severity(allure.severity_level.CRITICAL)
+    def test_temperature_conversion(api):
+        """Контракт: F = C x 9/5 + 32, значит 100 C -&gt; 212 F."""
+        resp = api.get(
+            f"{BASE_URL}/practice/temperature", params={"celsius": 100}, timeout=15
+        )
+        assert resp.status_code == 200
+        body = resp.json()
+&gt;       assert any(value == 212 for value in body.values()), (
+            f"212 F не найдено в ответе: {body}"
+        )
+E       AssertionError: 212 F не найдено в ответе: {'celsius': 100.0, 'fahrenheit': 180.0}
+E       assert False
+E        +  where False = any(&lt;generator object test_temperature_conversion.&lt;locals&gt;.&lt;genexpr&gt; at 0x0000015628377ED0&gt;)
+
+tests\test_practice_contracts.py:22: AssertionError</failure></testcase><testcase classname="tests.test_practice_contracts" name="test_transfer_over_balance_rejected" time="0.066"><failure message="AssertionError: перевод сверх баланса должен отклоняться: получили 200, тело {&quot;new_balance&quot;:-4900.0}&#10;assert 200 == 422&#10; +  where 200 = &lt;Response [200]&gt;.status_code">api = &lt;requests.sessions.Session object at 0x00000156278C9400&gt;
+
+    @allure.feature("Контракты /practice")
+    @allure.story("Перевод средств")
+    @allure.severity(allure.severity_level.CRITICAL)
+    def test_transfer_over_balance_rejected(api):
+        """Контракт: amount &gt; from_balance -&gt; 422 (баланс не должен уходить в минус)."""
+        resp = api.post(
+            f"{BASE_URL}/practice/transfer",
+            json={"from_balance": 100, "amount": 5000},
+            timeout=15,
+        )
+&gt;       assert resp.status_code == 422, (
+            f"перевод сверх баланса должен отклоняться: "
+            f"получили {resp.status_code}, тело {resp.text[:200]}"
+        )
+E       AssertionError: перевод сверх баланса должен отклоняться: получили 200, тело {"new_balance":-4900.0}
+E       assert 200 == 422
+E        +  where 200 = &lt;Response [200]&gt;.status_code
+
+tests\test_practice_contracts.py:37: AssertionError</failure></testcase><testcase classname="tests.test_practice_contracts" name="test_public_profile_no_private_fields" time="0.066"><failure message="AssertionError: в публичном профиле лишние поля: ['email', 'password_hash', 'role']&#10;assert not {'email', 'password_hash', 'role'}">api = &lt;requests.sessions.Session object at 0x00000156278C9400&gt;
+
+    @allure.feature("Контракты /practice")
+    @allure.story("Публичный профиль без приватных полей")
+    @allure.severity(allure.severity_level.CRITICAL)
+    def test_public_profile_no_private_fields(api):
+        """Контракт: публичный профиль отдает только id и name."""
+        resp = api.get(f"{BASE_URL}/practice/user/1", timeout=15)
+        assert resp.status_code == 200
+        extra = set(resp.json()) - {"id", "name"}
+&gt;       assert not extra, f"в публичном профиле лишние поля: {sorted(extra)}"
+E       AssertionError: в публичном профиле лишние поля: ['email', 'password_hash', 'role']
+E       assert not {'email', 'password_hash', 'role'}
+
+tests\test_practice_contracts.py:51: AssertionError</failure></testcase><testcase classname="tests.test_reader_flow" name="test_reader_profile" time="0.301"><error message="failed on setup with &quot;AssertionError: auth/token: ожидали 200, получили 201&#10;assert 201 == 200&#10; +  where 201 = &lt;Response [201]&gt;.status_code&quot;">fixturedef = &lt;FixtureDef argname='reader' scope='session' baseid=''&gt;
+request = &lt;SubRequest 'reader' for &lt;Function test_reader_profile&gt;&gt;
+
+    @pytest.hookimpl(wrapper=True)
+    def pytest_fixture_setup(fixturedef: FixtureDef, request) -&gt; object | None:
+        if (
+            fixturedef.argname == "event_loop_policy"
+            and fixturedef.func.__module__ != __name__
+        ):
+            warnings.warn(
+                PytestDeprecationWarning(_EVENT_LOOP_POLICY_FIXTURE_DEPRECATION_WARNING),
+            )
+        asyncio_mode = _get_asyncio_mode(request.config)
+        if not _is_asyncio_fixture_function(fixturedef.func):
+            if asyncio_mode == Mode.STRICT:
+                # Ignore async fixtures without explicit asyncio mark in strict mode
+                # This applies to pytest_trio fixtures, for example
+&gt;               return (yield)
+                        ^^^^^
+
+..\..\AppData\Roaming\Python\Python313\site-packages\pytest_asyncio\plugin.py:924: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+api = &lt;requests.sessions.Session object at 0x00000156278C9400&gt;
+
+    @pytest.fixture(scope="session")
+    def reader(api):
+        """Токен и профиль читателя для reader-эндпоинтов.
+    
+        Написана по образцу api(): выпускаем отдельный токен,
+        привязываем к нему нового читателя.
+        """
+        resp = requests.post(f"{BASE_URL}/auth/token", timeout=15)
+&gt;       assert resp.status_code == 200, (
+            f"auth/token: ожидали 200, получили {resp.status_code}"
+        )
+E       AssertionError: auth/token: ожидали 200, получили 201
+E       assert 201 == 200
+E        +  where 201 = &lt;Response [201]&gt;.status_code
+
+conftest.py:37: AssertionError</error></testcase><testcase classname="tests.test_reader_flow" name="test_reader_orders_empty" time="0.001"><error message="failed on setup with &quot;AssertionError: auth/token: ожидали 200, получили 201&#10;assert 201 == 200&#10; +  where 201 = &lt;Response [201]&gt;.status_code&quot;">api = &lt;requests.sessions.Session object at 0x00000156278C9400&gt;
+
+    @pytest.fixture(scope="session")
+    def reader(api):
+        """Токен и профиль читателя для reader-эндпоинтов.
+    
+        Написана по образцу api(): выпускаем отдельный токен,
+        привязываем к нему нового читателя.
+        """
+        resp = requests.post(f"{BASE_URL}/auth/token", timeout=15)
+&gt;       assert resp.status_code == 200, (
+            f"auth/token: ожидали 200, получили {resp.status_code}"
+        )
+E       AssertionError: auth/token: ожидали 200, получили 201
+E       assert 201 == 200
+E        +  where 201 = &lt;Response [201]&gt;.status_code
+
+conftest.py:37: AssertionError</error></testcase><testcase classname="tests.test_reader_flow" name="test_reader_reviews_empty" time="0.000"><error message="failed on setup with &quot;AssertionError: auth/token: ожидали 200, получили 201&#10;assert 201 == 200&#10; +  where 201 = &lt;Response [201]&gt;.status_code&quot;">api = &lt;requests.sessions.Session object at 0x00000156278C9400&gt;
+
+    @pytest.fixture(scope="session")
+    def reader(api):
+        """Токен и профиль читателя для reader-эндпоинтов.
+    
+        Написана по образцу api(): выпускаем отдельный токен,
+        привязываем к нему нового читателя.
+        """
+        resp = requests.post(f"{BASE_URL}/auth/token", timeout=15)
+&gt;       assert resp.status_code == 200, (
+            f"auth/token: ожидали 200, получили {resp.status_code}"
+        )
+E       AssertionError: auth/token: ожидали 200, получили 201
+E       assert 201 == 200
+E        +  where 201 = &lt;Response [201]&gt;.status_code
+
+conftest.py:37: AssertionError</error></testcase><testcase classname="tests.test_reader_flow" name="test_reader_wishlist_empty" time="0.000"><error message="failed on setup with &quot;AssertionError: auth/token: ожидали 200, получили 201&#10;assert 201 == 200&#10; +  where 201 = &lt;Response [201]&gt;.status_code&quot;">api = &lt;requests.sessions.Session object at 0x00000156278C9400&gt;
+
+    @pytest.fixture(scope="session")
+    def reader(api):
+        """Токен и профиль читателя для reader-эндпоинтов.
+    
+        Написана по образцу api(): выпускаем отдельный токен,
+        привязываем к нему нового читателя.
+        """
+        resp = requests.post(f"{BASE_URL}/auth/token", timeout=15)
+&gt;       assert resp.status_code == 200, (
+            f"auth/token: ожидали 200, получили {resp.status_code}"
+        )
+E       AssertionError: auth/token: ожидали 200, получили 201
+E       assert 201 == 200
+E        +  where 201 = &lt;Response [201]&gt;.status_code
+
+conftest.py:37: AssertionError</error></testcase><testcase classname="tests.test_service" name="test_teapot_is_teapot" time="0.055" /><testcase classname="tests.test_service" name="test_service_stability" time="0.073"><failure message="AssertionError: сервис нестабилен: 500 {&quot;detail&quot;:&quot;Internal Server Error&quot;}&#10;assert 500 == 200&#10; +  where 500 = &lt;Response [500]&gt;.status_code">api = &lt;requests.sessions.Session object at 0x00000156278C9400&gt;
+
+    @allure.feature("Сервисные проверки")
+    @allure.story("Стабильность сервиса")
+    @allure.severity(allure.severity_level.CRITICAL)
+    def test_service_stability(api):
+        """Проверка стабильности сервисного эндпоинта."""
+        resp = api.get(f"{BASE_URL}/practice/unstable", timeout=15)
+        if resp.status_code == 404:
+            pytest.skip(
+                "эндпоинт /practice/unstable ещё не задеплоен (см. челленджер qachallenger)"
+            )
+&gt;       assert resp.status_code == 200, (
+            f"сервис нестабилен: {resp.status_code} {resp.text[:200]}"
+        )
+E       AssertionError: сервис нестабилен: 500 {"detail":"Internal Server Error"}
+E       assert 500 == 200
+E        +  where 500 = &lt;Response [500]&gt;.status_code
+
+tests\test_service.py:28: AssertionError</failure></testcase></testsuite></testsuites>

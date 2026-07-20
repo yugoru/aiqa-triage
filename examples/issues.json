@@ -1,0 +1,82 @@
+[
+  {
+    "title": "[код_автотеста] Тест ожидает поле 'name' в ответе GET /books, но API возвращает 'title'. Поле 'name' не предусмотрен",
+    "category": "код_автотеста",
+    "body": "Затронутые тесты: tests.test_books::test_book_fields\n\nПервопричина: Тест ожидает поле 'name' в ответе GET /books, но API возвращает 'title'. Поле 'name' не предусмотрено контрактом — в OpenAPI обязательные поля POST: title, isbn, price; в ответе коллекции присутствует 'title', а не 'name'.\n\nУлики: assert 'name' in book -> AssertionError: в карточке книги нет поля 'name'. Фактические поля: ['author_id', 'created_at', 'description', 'genre_id', 'id', 'isbn', 'price', 'published_year', 'stock', 'title', 'updated_at']. Контракт не содержит 'name'.\n\nРекомендация: Заменить 'name' на 'title' в списке обязательных полей в тесте (строка for field in ('id', 'name', 'isbn', 'price')).",
+    "labels": [
+      "ai-triage",
+      "код_автотеста"
+    ],
+    "status": "draft"
+  },
+  {
+    "title": "[код_автотеста] Тест отправляет ISBN с дефисом (978-582304648) вместо 13 цифр без разделителей, а также price = -10,",
+    "category": "код_автотеста",
+    "body": "Затронутые тесты: tests.test_books::test_create_book_minimal\n\nПервопричина: Тест отправляет ISBN с дефисом (978-582304648) вместо 13 цифр без разделителей, а также price = -10, нарушая контракт (price >= 0). Сервер корректно возвращает 422.\n\nУлики: Ошибка валидации: \"Value error, ISBN должен содержать только цифры (13 штук)\" для isbn и \"Input should be greater than or equal to 0\" для price. В тесте payload содержит \"isbn\": f\"978-{uuid.uuid4().int % 10**9:09d}\" (с дефисом) и \"price\": -10.\n\nРекомендация: Исправить isbn на 13 цифр без дефиса (например, f\"978{uuid.uuid4().int % 10**9:09d}\" или f\"{uuid.uuid4().int % 10**13:013d}\") и установить price >= 0 (например, 0 или положительное число).",
+    "labels": [
+      "ai-triage",
+      "код_автотеста"
+    ],
+    "status": "draft"
+  },
+  {
+    "title": "[инфраструктура] Не удаётся разрешить DNS-имя 'qahacking.railway.internal'. Хост либо не существует, либо не доступен",
+    "category": "инфраструктура",
+    "body": "Затронутые тесты: tests.test_genres::test_genres_list_ok\n\nПервопричина: Не удаётся разрешить DNS-имя 'qahacking.railway.internal'. Хост либо не существует, либо не доступен из текущего сетевого окружения.\n\nУлики: NameResolutionError: Failed to resolve 'qahacking.railway.internal' ([Errno 11001] getaddrinfo failed)\n\nРекомендация: Проверить доступность хоста qahacking.railway.internal через DNS и сеть. Возможно, нужно заменить адрес на корректный для тестового окружения.",
+    "labels": [
+      "ai-triage",
+      "инфраструктура"
+    ],
+    "status": "draft"
+  },
+  {
+    "title": "[код_автотеста] Тест ожидает статус 201 при GET /books, но по контракту метод GET безопасный и должен возвращать 200",
+    "category": "код_автотеста",
+    "body": "Затронутые тесты: tests.test_methods::test_books_list_status_created\n\nПервопричина: Тест ожидает статус 201 при GET /books, но по контракту метод GET безопасный и должен возвращать 200 OK. 201 возвращается только при POST /books.\n\nУлики: Трейсбек: assert 200 == 201; контракт: GET /books — безопасный, 200 OK.\n\nРекомендация: Изменить ожидаемый статус в тесте на 200 или переписать тест для проверки POST /books с созданием новой книги.",
+    "labels": [
+      "ai-triage",
+      "код_автотеста"
+    ],
+    "status": "draft"
+  },
+  {
+    "title": "/practice/temperature: неверное значение Fahrenheit при celsius=100",
+    "category": "продукт",
+    "body": "Затронутые тесты: tests.test_practice_contracts::test_temperature_conversion\n\nПервопричина: Сервис возвращает fahrenheit=180 вместо 212 по формуле F = C × 9/5 + 32, нарушая контракт.\n\nУлики: Ответ сервиса: {'celsius': 100.0, 'fahrenheit': 180.0}. Ожидалось: fahrenheit=212 согласно контракту (F = C × 9/5 + 32).\n\nРекомендация: Исправить реализацию эндпоинта /practice/temperature, чтобы корректно применялась формула перевода Цельсия в Фаренгейты: F = C × 9/5 + 32.",
+    "labels": [
+      "ai-triage",
+      "продукт"
+    ],
+    "status": "draft"
+  },
+  {
+    "title": "POST /practice/transfer: превышение баланса приводит к 200 и отрицательному балансу вместо 422",
+    "category": "продукт",
+    "body": "Затронутые тесты: tests.test_practice_contracts::test_transfer_over_balance_rejected\n\nПервопричина: Сервис возвращает 200 и отрицательный баланс при попытке перевести сумму, превышающую баланс, хотя контракт требует 422.\n\nУлики: Запрос: POST /practice/transfer с json={'from_balance': 100, 'amount': 5000}. Ответ: 200, тело {'new_balance': -4900.0}. Тест ожидал 422.\n\nРекомендация: Исправить серверную логику: при amount > from_balance возвращать 422 и не выполнять перевод.",
+    "labels": [
+      "ai-triage",
+      "продукт"
+    ],
+    "status": "draft"
+  },
+  {
+    "title": "GET /practice/user/1: возвращает приватные поля email, password_hash, role при условии запроса публичного профиля",
+    "category": "продукт",
+    "body": "Затронутые тесты: tests.test_practice_contracts::test_public_profile_no_private_fields\n\nПервопричина: API возвращает приватные поля, несмотря на контракт, требующий только id и name\n\nУлики: Ответ содержит поля email, password_hash, role, которых не должно быть согласно контракту\n\nРекомендация: Исправить API, чтобы при запросе публичного профиля (GET /practice/user/{user_id}) возвращались только id и name, скрывая приватные поля",
+    "labels": [
+      "ai-triage",
+      "продукт"
+    ],
+    "status": "draft"
+  },
+  {
+    "title": "[инструментарий] Фикстура `reader` в conftest.py ожидает статус 200 от POST /auth/token, но по контракту API возвраща",
+    "category": "инструментарий",
+    "body": "Затронутые тесты: tests.test_reader_flow::test_reader_profile, tests.test_reader_flow::test_reader_orders_empty, tests.test_reader_flow::test_reader_reviews_empty, tests.test_reader_flow::test_reader_wishlist_empty\n\nПервопричина: Фикстура `reader` в conftest.py ожидает статус 200 от POST /auth/token, но по контракту API возвращает 201.\n\nУлики: AssertionError: auth/token: ожидали 200, получили 201. Контракт OpenAPI для POST /auth/token указывает 201 Created.\n\nРекомендация: Обновить фикстуру `reader` в conftest.py: заменить `assert resp.status_code == 200` на `assert resp.status_code == 201`.",
+    "labels": [
+      "ai-triage",
+      "инструментарий"
+    ],
+    "status": "draft"
+  }
+]

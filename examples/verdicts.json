@@ -1,0 +1,142 @@
+[
+  {
+    "test": "tests.test_books::test_book_fields",
+    "category": "код_автотеста",
+    "confidence": 1.0,
+    "root_cause": "Тест ожидает поле 'name' в ответе GET /books, но API возвращает 'title'. Поле 'name' не предусмотрено контрактом — в OpenAPI обязательные поля POST: title, isbn, price; в ответе коллекции присутствует 'title', а не 'name'.",
+    "evidence": "assert 'name' in book -> AssertionError: в карточке книги нет поля 'name'. Фактические поля: ['author_id', 'created_at', 'description', 'genre_id', 'id', 'isbn', 'price', 'published_year', 'stock', 'title', 'updated_at']. Контракт не содержит 'name'.",
+    "suggested_action": "Заменить 'name' на 'title' в списке обязательных полей в тесте (строка for field in ('id', 'name', 'isbn', 'price')).",
+    "needs_human": false,
+    "draft_bug_title": null
+  },
+  {
+    "test": "tests.test_books::test_create_book_minimal",
+    "category": "код_автотеста",
+    "confidence": 1.0,
+    "root_cause": "Тест отправляет ISBN с дефисом (978-582304648) вместо 13 цифр без разделителей, а также price = -10, нарушая контракт (price >= 0). Сервер корректно возвращает 422.",
+    "evidence": "Ошибка валидации: \"Value error, ISBN должен содержать только цифры (13 штук)\" для isbn и \"Input should be greater than or equal to 0\" для price. В тесте payload содержит \"isbn\": f\"978-{uuid.uuid4().int % 10**9:09d}\" (с дефисом) и \"price\": -10.",
+    "suggested_action": "Исправить isbn на 13 цифр без дефиса (например, f\"978{uuid.uuid4().int % 10**9:09d}\" или f\"{uuid.uuid4().int % 10**13:013d}\") и установить price >= 0 (например, 0 или положительное число).",
+    "needs_human": false,
+    "draft_bug_title": null
+  },
+  {
+    "test": "tests.test_books::test_books_list_response_time",
+    "category": "код_автотеста",
+    "confidence": 0.4,
+    "root_cause": "Тест использует нереалистично малый таймаут (0.01 с) для запроса GET /books, что приводит к ReadTimeout. Контракт не гарантирует время ответа, поэтому проблема в тесте.",
+    "evidence": "Сообщение об ошибке: Read timed out. (read timeout=0.01). Код теста: timeout=0.01 в вызове api_request.",
+    "suggested_action": "Увеличить значение timeout в тесте до разумного (например, 5 или 10 секунд) или удалить явное указание таймаута, чтобы использовать дефолтный.",
+    "needs_human": true,
+    "draft_bug_title": null
+  },
+  {
+    "test": "tests.test_genres::test_genres_list_ok",
+    "category": "инфраструктура",
+    "confidence": 0.95,
+    "root_cause": "Не удаётся разрешить DNS-имя 'qahacking.railway.internal'. Хост либо не существует, либо не доступен из текущего сетевого окружения.",
+    "evidence": "NameResolutionError: Failed to resolve 'qahacking.railway.internal' ([Errno 11001] getaddrinfo failed)",
+    "suggested_action": "Проверить доступность хоста qahacking.railway.internal через DNS и сеть. Возможно, нужно заменить адрес на корректный для тестового окружения.",
+    "needs_human": false,
+    "draft_bug_title": null
+  },
+  {
+    "test": "tests.test_methods::test_books_list_status_created",
+    "category": "код_автотеста",
+    "confidence": 0.99,
+    "root_cause": "Тест ожидает статус 201 при GET /books, но по контракту метод GET безопасный и должен возвращать 200 OK. 201 возвращается только при POST /books.",
+    "evidence": "Трейсбек: assert 200 == 201; контракт: GET /books — безопасный, 200 OK.",
+    "suggested_action": "Изменить ожидаемый статус в тесте на 200 или переписать тест для проверки POST /books с созданием новой книги.",
+    "needs_human": false,
+    "draft_bug_title": null
+  },
+  {
+    "test": "tests.test_methods::test_slow_endpoint_within_budget",
+    "category": "код_автотеста",
+    "confidence": 0.5,
+    "root_cause": "Тест использует клиентский таймаут 1 секунду, что меньше задержки по умолчанию (2 секунды) для эндпоинта /practice/slow согласно контракту, который допускает задержку от 0 до 30 секунд.",
+    "evidence": "Контракт OpenAPI: 'отвечает 200 {\"delayed\": N} через delay секунд (0–30, по умолчанию 2)'. В тесте timeout=1, что приводит к ReadTimeout.",
+    "suggested_action": "Увеличить timeout в тесте до значения, превышающего максимальную ожидаемую задержку (например, до 5 или 30 секунд), или пересмотреть ожидание времени ответа.",
+    "needs_human": true,
+    "draft_bug_title": null
+  },
+  {
+    "test": "tests.test_practice_contracts::test_temperature_conversion",
+    "category": "продукт",
+    "confidence": 1.0,
+    "root_cause": "Сервис возвращает fahrenheit=180 вместо 212 по формуле F = C × 9/5 + 32, нарушая контракт.",
+    "evidence": "Ответ сервиса: {'celsius': 100.0, 'fahrenheit': 180.0}. Ожидалось: fahrenheit=212 согласно контракту (F = C × 9/5 + 32).",
+    "suggested_action": "Исправить реализацию эндпоинта /practice/temperature, чтобы корректно применялась формула перевода Цельсия в Фаренгейты: F = C × 9/5 + 32.",
+    "needs_human": false,
+    "draft_bug_title": "/practice/temperature: неверное значение Fahrenheit при celsius=100"
+  },
+  {
+    "test": "tests.test_practice_contracts::test_transfer_over_balance_rejected",
+    "category": "продукт",
+    "confidence": 1.0,
+    "root_cause": "Сервис возвращает 200 и отрицательный баланс при попытке перевести сумму, превышающую баланс, хотя контракт требует 422.",
+    "evidence": "Запрос: POST /practice/transfer с json={'from_balance': 100, 'amount': 5000}. Ответ: 200, тело {'new_balance': -4900.0}. Тест ожидал 422.",
+    "suggested_action": "Исправить серверную логику: при amount > from_balance возвращать 422 и не выполнять перевод.",
+    "needs_human": false,
+    "draft_bug_title": "POST /practice/transfer: превышение баланса приводит к 200 и отрицательному балансу вместо 422"
+  },
+  {
+    "test": "tests.test_practice_contracts::test_public_profile_no_private_fields",
+    "category": "продукт",
+    "confidence": 0.95,
+    "root_cause": "API возвращает приватные поля, несмотря на контракт, требующий только id и name",
+    "evidence": "Ответ содержит поля email, password_hash, role, которых не должно быть согласно контракту",
+    "suggested_action": "Исправить API, чтобы при запросе публичного профиля (GET /practice/user/{user_id}) возвращались только id и name, скрывая приватные поля",
+    "needs_human": false,
+    "draft_bug_title": "GET /practice/user/1: возвращает приватные поля email, password_hash, role при условии запроса публичного профиля"
+  },
+  {
+    "test": "tests.test_reader_flow::test_reader_profile",
+    "category": "инструментарий",
+    "confidence": 1.0,
+    "root_cause": "Фикстура `reader` в conftest.py ожидает статус 200 от POST /auth/token, но по контракту API возвращает 201.",
+    "evidence": "AssertionError: auth/token: ожидали 200, получили 201. Контракт OpenAPI для POST /auth/token указывает 201 Created.",
+    "suggested_action": "Обновить фикстуру `reader` в conftest.py: заменить `assert resp.status_code == 200` на `assert resp.status_code == 201`.",
+    "needs_human": false,
+    "draft_bug_title": null
+  },
+  {
+    "test": "tests.test_reader_flow::test_reader_orders_empty",
+    "category": "инструментарий",
+    "confidence": 1.0,
+    "root_cause": "Фикстура reader в conftest.py ожидает HTTP 200 от POST /auth/token, но согласно контракту успешный ответ — 201. Фикстура устарела и не соответствует актуальному API.",
+    "evidence": "Ошибка на setup: AssertionError: auth/token: ожидали 200, получили 201. Трейсбек указывает на conftest.py:115: assert resp.status_code == 200.",
+    "suggested_action": "Обновить фикстуру reader: заменить assert resp.status_code == 200 на assert resp.status_code == 201 и при необходимости адаптировать обработку ответа.",
+    "needs_human": false,
+    "draft_bug_title": null
+  },
+  {
+    "test": "tests.test_reader_flow::test_reader_reviews_empty",
+    "category": "инструментарий",
+    "confidence": 0.95,
+    "root_cause": "Фикстура reader в conftest.py ожидает 200 от POST /auth/token, но контракт API возвращает 201 Created.",
+    "evidence": "Трейсбек: conftest.py:115: AssertionError: auth/token: ожидали 200, получили 201. Контракт: POST /auth/token → 201 Created.",
+    "suggested_action": "Исправить фикстуру reader: заменить assert resp.status_code == 200 на assert resp.status_code == 201.",
+    "needs_human": false,
+    "draft_bug_title": null
+  },
+  {
+    "test": "tests.test_reader_flow::test_reader_wishlist_empty",
+    "category": "инструментарий",
+    "confidence": 1.0,
+    "root_cause": "Фикстура reader в conftest.py ожидает код 200 от POST /auth/token, но по контракту API возвращает 201 Created.",
+    "evidence": "conftest.py:115: assert resp.status_code == 200, получили 201; контракт OpenAPI для POST /auth/token: 201 Created.",
+    "suggested_action": "Обновить фикстуру reader: заменить assert resp.status_code == 200 на assert resp.status_code == 201.",
+    "needs_human": false,
+    "draft_bug_title": null
+  },
+  {
+    "test": "tests.test_service::test_service_stability",
+    "category": "flaky",
+    "confidence": 0.9,
+    "root_cause": "Эндпоинт /practice/unstable по контракту является флаки-эндпоинтом: с вероятностью ~30% возвращает 500 вместо 200. Текущий запрос попал в окно падения.",
+    "evidence": "OpenAPI контракт указывает: 'отвечает 200 {\"status\": \"ok\"} — но с вероятностью ~30% падает с 500. Полигон для флаки-тестов'. Тест получил 500, что соответствует задокументированной нестабильности.",
+    "suggested_action": "Рассмотреть стабилизацию эндпоинта или модифицировать тест: игнорировать флаки-падения (например, повторить запрос) либо помечать тест как ожидаемо нестабильный (pytest.mark.flaky).",
+    "needs_human": true,
+    "draft_bug_title": null
+  }
+]

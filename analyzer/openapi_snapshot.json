@@ -1,0 +1,2495 @@
+{
+ "openapi": "3.1.0",
+ "info": {
+  "title": "BookShelf API Trainer",
+  "version": "1.0.0",
+  "description": "\n## Тренажёр по тестированию REST API\n\nПрактический тренажёр для QA-студентов. Выполните все 71 задание, отправляя HTTP-запросы\nчерез Swagger UI или Postman.\n\n### Ссылки\n| | |\n|-|-|\n| Задания | [https://qahacking.up.railway.app](https://qahacking.up.railway.app) |\n| Прогресс | [https://qahacking.up.railway.app/progress](https://qahacking.up.railway.app/progress) |\n| Swagger | [https://qahacking.up.railway.app/docs](https://qahacking.up.railway.app/docs) |\n\n### Быстрый старт\n1. Получите Bearer-токен через `POST /auth/token`\n2. Зарегистрируйтесь через `POST /readers`, чтобы получить доступ к профилю, заказам и рецензиям\n3. Используйте токен в заголовке `Authorization: Bearer <token>` или `X-Reader-Token`\n4. Прогресс по заданиям — `GET /auth/progress` или [https://qahacking.up.railway.app/progress](https://qahacking.up.railway.app/progress)\n\n### Заголовок языка\nДобавьте `Lang: ru` к любому запросу, чтобы получать ошибки на русском (по умолчанию — `en`).\n\n### Коды ответов\n| Код | Значение |\n|-----|----------|\n| 200 | OK — запрос выполнен |\n| 201 | Created — ресурс создан |\n| 204 | No Content — удаление прошло успешно |\n| 401 | Unauthorized — токен отсутствует или недействителен |\n| 402 | Payment Required — см. `POST /orders/{id}/pay` |\n| 403 | Forbidden — доступ к чужому ресурсу |\n| 404 | Not Found — ресурс не найден |\n| 406 | Not Acceptable — неподдерживаемый формат ответа |\n| 409 | Conflict — конфликт данных |\n| 413 | Content Too Large — файл слишком большой |\n| 415 | Unsupported Media Type — неверный тип файла |\n| 418 | I'm a Teapot — пасхалка RFC 2324, см. `GET /teapot` |\n| 422 | Unprocessable Entity — ошибка валидации |\n| 429 | Too Many Requests — слишком много запросов |\n\n---\n\n📱 Подписывайся на [Telegram-канал QAHacking](https://t.me/ermita_one) — будь в курсе новостей тестирования.\n"
+ },
+ "_snapshot_note": "Урезанный снапшот живой спеки qahacking.up.railway.app: только пути, задетые тест-сетом занятия 6, плюс 3 эндпоинта челленджера. Источник истины — GET /openapi.json.",
+ "paths": {
+  "/auth/token": {
+   "post": {
+    "tags": [
+     "Авторизация"
+    ],
+    "summary": "Получить Bearer-токен",
+    "description": "### POST — выпустить токен для отслеживания прогресса\n\nСоздаёт персональный Bearer-токен. Токен хранится **14 дней** с момента последнего использования.\n\nИспользуйте токен двумя способами:\n- Заголовок `Authorization: Bearer <token>`\n- Заголовок `X-Reader-Token: <token>`\n\nДля работы с эндпоинтами читателей (профиль, заказы, рецензии) зарегистрируйтесь через `POST /readers` — **тот же самый токен** автоматически привяжется к новому профилю, ничего перевыпускать не нужно.\n\n**201 Created** — токен создан и готов к использованию.",
+    "operationId": "create_token_auth_token_post",
+    "responses": {
+     "201": {
+      "description": "Token created",
+      "content": {
+       "application/json": {
+        "schema": {}
+       }
+      }
+     }
+    },
+    "parameters": [
+     {
+      "name": "Lang",
+      "in": "header",
+      "required": false,
+      "schema": {
+       "type": "string",
+       "enum": [
+        "en",
+        "ru"
+       ],
+       "default": "en"
+      },
+      "description": "Response language: `en` (default) or `ru`"
+     }
+    ]
+   }
+  },
+  "/authors": {
+   "get": {
+    "tags": [
+     "Авторы"
+    ],
+    "summary": "Получить список авторов",
+    "description": "### GET — получение коллекции\nВозвращает список авторов. Метод GET **безопасный** и **идемпотентный**.\n\n**Параметры фильтрации:**\n- `search` — поиск по части имени (регистронезависимый)\n- `country` — фильтр по стране (поиск по подстроке)\n\n**Пагинация:** `skip` + `limit`. Ответ: `{\"items\": [...], \"total\": N}`.",
+    "operationId": "list_authors_authors_get",
+    "parameters": [
+     {
+      "name": "skip",
+      "in": "query",
+      "required": false,
+      "schema": {
+       "type": "integer",
+       "minimum": 0,
+       "description": "Сколько записей пропустить",
+       "default": 0,
+       "title": "Skip"
+      },
+      "description": "Сколько записей пропустить"
+     },
+     {
+      "name": "limit",
+      "in": "query",
+      "required": false,
+      "schema": {
+       "type": "integer",
+       "maximum": 100,
+       "minimum": 1,
+       "description": "Максимум записей в ответе",
+       "default": 20,
+       "title": "Limit"
+      },
+      "description": "Максимум записей в ответе"
+     },
+     {
+      "name": "country",
+      "in": "query",
+      "required": false,
+      "schema": {
+       "anyOf": [
+        {
+         "type": "string"
+        },
+        {
+         "type": "null"
+        }
+       ],
+       "description": "Фильтр по стране автора",
+       "title": "Country"
+      },
+      "description": "Фильтр по стране автора"
+     },
+     {
+      "name": "search",
+      "in": "query",
+      "required": false,
+      "schema": {
+       "anyOf": [
+        {
+         "type": "string"
+        },
+        {
+         "type": "null"
+        }
+       ],
+       "description": "Поиск по имени автора",
+       "title": "Search"
+      },
+      "description": "Поиск по имени автора"
+     },
+     {
+      "name": "Lang",
+      "in": "header",
+      "required": false,
+      "schema": {
+       "type": "string",
+       "enum": [
+        "en",
+        "ru"
+       ],
+       "default": "en"
+      },
+      "description": "Response language: `en` (default) or `ru`"
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "Список авторов с пагинацией",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/PaginatedResponse_AuthorOut_"
+        }
+       }
+      }
+     },
+     "422": {
+      "description": "❗ Unprocessable Entity — данные синтаксически корректны, но не прошли валидацию (неверный тип, диапазон, отсутствует обязательное поле)"
+     }
+    }
+   },
+   "post": {
+    "tags": [
+     "Авторы"
+    ],
+    "summary": "Создать автора",
+    "description": "### POST — создание ресурса\nСоздаёт нового автора. Поле `name` **обязательно** — без него **422**.\n\nПри успехе — **201 Created** с созданным объектом в теле. Обязательно передавай `Content-Type: application/json`.",
+    "operationId": "create_author_authors_post",
+    "requestBody": {
+     "required": true,
+     "content": {
+      "application/json": {
+       "schema": {
+        "$ref": "#/components/schemas/AuthorCreate"
+       }
+      }
+     }
+    },
+    "responses": {
+     "201": {
+      "description": "Автор создан",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/AuthorOut"
+        }
+       }
+      }
+     },
+     "422": {
+      "description": "❗ Unprocessable Entity — данные синтаксически корректны, но не прошли валидацию (неверный тип, диапазон, отсутствует обязательное поле)"
+     }
+    },
+    "parameters": [
+     {
+      "name": "Lang",
+      "in": "header",
+      "required": false,
+      "schema": {
+       "type": "string",
+       "enum": [
+        "en",
+        "ru"
+       ],
+       "default": "en"
+      },
+      "description": "Response language: `en` (default) or `ru`"
+     }
+    ]
+   }
+  },
+  "/authors/{author_id}": {
+   "get": {
+    "tags": [
+     "Авторы"
+    ],
+    "summary": "Получить автора по ID",
+    "description": "### GET /{id} — конкретный ресурс\nВозвращает данные одного автора.\n\n- **200 OK** — автор найден\n- **404 Not Found** — автора с таким ID нет",
+    "operationId": "get_author_authors__author_id__get",
+    "parameters": [
+     {
+      "name": "author_id",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "integer",
+       "title": "Author Id"
+      }
+     },
+     {
+      "name": "Lang",
+      "in": "header",
+      "required": false,
+      "schema": {
+       "type": "string",
+       "enum": [
+        "en",
+        "ru"
+       ],
+       "default": "en"
+      },
+      "description": "Response language: `en` (default) or `ru`"
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "Данные автора",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/AuthorOut"
+        }
+       }
+      }
+     },
+     "404": {
+      "description": "🔍 Not Found — ресурс с указанным ID не существует",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/ErrorDetail"
+        }
+       }
+      }
+     },
+     "422": {
+      "description": "Validation Error",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/HTTPValidationError"
+        }
+       }
+      }
+     }
+    }
+   },
+   "put": {
+    "tags": [
+     "Авторы"
+    ],
+    "summary": "Полное обновление автора (PUT)",
+    "description": "### PUT — полная замена\nЗаменяет объект целиком. Все обязательные поля должны быть в теле.\n\n- **200 OK** — успешно обновлено (идемпотентно)\n- **404** — автор не найден\n- **422** — `name` не передан или пустой",
+    "operationId": "update_author_authors__author_id__put",
+    "parameters": [
+     {
+      "name": "author_id",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "integer",
+       "title": "Author Id"
+      }
+     },
+     {
+      "name": "Lang",
+      "in": "header",
+      "required": false,
+      "schema": {
+       "type": "string",
+       "enum": [
+        "en",
+        "ru"
+       ],
+       "default": "en"
+      },
+      "description": "Response language: `en` (default) or `ru`"
+     }
+    ],
+    "requestBody": {
+     "required": true,
+     "content": {
+      "application/json": {
+       "schema": {
+        "$ref": "#/components/schemas/AuthorUpdate"
+       }
+      }
+     }
+    },
+    "responses": {
+     "200": {
+      "description": "Обновлённые данные автора",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/AuthorOut"
+        }
+       }
+      }
+     },
+     "404": {
+      "description": "🔍 Not Found — ресурс с указанным ID не существует",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/ErrorDetail"
+        }
+       }
+      }
+     },
+     "422": {
+      "description": "❗ Unprocessable Entity — данные синтаксически корректны, но не прошли валидацию (неверный тип, диапазон, отсутствует обязательное поле)"
+     }
+    }
+   },
+   "patch": {
+    "tags": [
+     "Авторы"
+    ],
+    "summary": "Частичное обновление автора (PATCH)",
+    "description": "### PATCH — частичное изменение\nОбновляет только переданные поля. Например, только `{\"country\": \"Франция\"}`.\n\n- **200 OK** — успешно обновлено\n- **404** — автор не найден\n- **422** — переданные данные не прошли валидацию",
+    "operationId": "patch_author_authors__author_id__patch",
+    "parameters": [
+     {
+      "name": "author_id",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "integer",
+       "title": "Author Id"
+      }
+     },
+     {
+      "name": "Lang",
+      "in": "header",
+      "required": false,
+      "schema": {
+       "type": "string",
+       "enum": [
+        "en",
+        "ru"
+       ],
+       "default": "en"
+      },
+      "description": "Response language: `en` (default) or `ru`"
+     }
+    ],
+    "requestBody": {
+     "required": true,
+     "content": {
+      "application/json": {
+       "schema": {
+        "$ref": "#/components/schemas/AuthorPatch"
+       }
+      }
+     }
+    },
+    "responses": {
+     "200": {
+      "description": "Обновлённые данные автора",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/AuthorOut"
+        }
+       }
+      }
+     },
+     "404": {
+      "description": "🔍 Not Found — ресурс с указанным ID не существует",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/ErrorDetail"
+        }
+       }
+      }
+     },
+     "422": {
+      "description": "❗ Unprocessable Entity — данные синтаксически корректны, но не прошли валидацию (неверный тип, диапазон, отсутствует обязательное поле)"
+     }
+    }
+   },
+   "delete": {
+    "tags": [
+     "Авторы"
+    ],
+    "summary": "Удалить автора",
+    "description": "### DELETE — удаление ресурса\nУдаляет автора. При успехе — **204 No Content** (тело пустое).\n\n- **204 No Content** — автор удалён\n- **404 Not Found** — автор не существует\n- **409 Conflict** — у автора есть книги в каталоге (удали/переназначь книги сначала)",
+    "operationId": "delete_author_authors__author_id__delete",
+    "parameters": [
+     {
+      "name": "author_id",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "integer",
+       "title": "Author Id"
+      }
+     },
+     {
+      "name": "Lang",
+      "in": "header",
+      "required": false,
+      "schema": {
+       "type": "string",
+       "enum": [
+        "en",
+        "ru"
+       ],
+       "default": "en"
+      },
+      "description": "Response language: `en` (default) or `ru`"
+     }
+    ],
+    "responses": {
+     "204": {
+      "description": "Successful Response"
+     },
+     "404": {
+      "description": "🔍 Not Found — ресурс с указанным ID не существует",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/ErrorDetail"
+        }
+       }
+      }
+     },
+     "409": {
+      "description": "⚠️ Conflict — конфликт данных: дубликат уникального поля или нарушение бизнес-правила",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/ErrorDetail"
+        }
+       }
+      }
+     },
+     "422": {
+      "description": "Validation Error",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/HTTPValidationError"
+        }
+       }
+      }
+     }
+    }
+   }
+  },
+  "/genres": {
+   "get": {
+    "tags": [
+     "Жанры"
+    ],
+    "summary": "Получить список жанров",
+    "description": "Возвращает все жанры. Справочный эндпоинт — жанров немного, лимит 100.\n\n- **200 OK** — список жанров",
+    "operationId": "list_genres_genres_get",
+    "parameters": [
+     {
+      "name": "skip",
+      "in": "query",
+      "required": false,
+      "schema": {
+       "type": "integer",
+       "minimum": 0,
+       "default": 0,
+       "title": "Skip"
+      }
+     },
+     {
+      "name": "limit",
+      "in": "query",
+      "required": false,
+      "schema": {
+       "type": "integer",
+       "maximum": 200,
+       "minimum": 1,
+       "default": 100,
+       "title": "Limit"
+      }
+     },
+     {
+      "name": "Lang",
+      "in": "header",
+      "required": false,
+      "schema": {
+       "type": "string",
+       "enum": [
+        "en",
+        "ru"
+       ],
+       "default": "en"
+      },
+      "description": "Response language: `en` (default) or `ru`"
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "Список жанров",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/PaginatedResponse_GenreOut_"
+        }
+       }
+      }
+     },
+     "422": {
+      "description": "❗ Unprocessable Entity — данные синтаксически корректны, но не прошли валидацию (неверный тип, диапазон, отсутствует обязательное поле)"
+     }
+    }
+   },
+   "post": {
+    "tags": [
+     "Жанры"
+    ],
+    "summary": "Создать жанр",
+    "description": "Создаёт новый жанр. Название уникально.\n\n- **201 Created** — жанр создан\n- **409 Conflict** — жанр с таким `name` уже существует\n- **422** — не передано поле `name`",
+    "operationId": "create_genre_genres_post",
+    "requestBody": {
+     "required": true,
+     "content": {
+      "application/json": {
+       "schema": {
+        "$ref": "#/components/schemas/GenreCreate"
+       }
+      }
+     }
+    },
+    "responses": {
+     "201": {
+      "description": "Жанр создан",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/GenreOut"
+        }
+       }
+      }
+     },
+     "409": {
+      "description": "⚠️ Conflict — конфликт данных: дубликат уникального поля или нарушение бизнес-правила",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/ErrorDetail"
+        }
+       }
+      }
+     },
+     "422": {
+      "description": "❗ Unprocessable Entity — данные синтаксически корректны, но не прошли валидацию (неверный тип, диапазон, отсутствует обязательное поле)"
+     }
+    },
+    "parameters": [
+     {
+      "name": "Lang",
+      "in": "header",
+      "required": false,
+      "schema": {
+       "type": "string",
+       "enum": [
+        "en",
+        "ru"
+       ],
+       "default": "en"
+      },
+      "description": "Response language: `en` (default) or `ru`"
+     }
+    ]
+   }
+  },
+  "/genres/{genre_id}": {
+   "get": {
+    "tags": [
+     "Жанры"
+    ],
+    "summary": "Получить жанр по ID",
+    "description": "- **200 OK** — жанр найден\n- **404 Not Found** — жанр не существует",
+    "operationId": "get_genre_genres__genre_id__get",
+    "parameters": [
+     {
+      "name": "genre_id",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "integer",
+       "title": "Genre Id"
+      }
+     },
+     {
+      "name": "Lang",
+      "in": "header",
+      "required": false,
+      "schema": {
+       "type": "string",
+       "enum": [
+        "en",
+        "ru"
+       ],
+       "default": "en"
+      },
+      "description": "Response language: `en` (default) or `ru`"
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "Данные жанра",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/GenreOut"
+        }
+       }
+      }
+     },
+     "404": {
+      "description": "🔍 Not Found — ресурс с указанным ID не существует",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/ErrorDetail"
+        }
+       }
+      }
+     },
+     "422": {
+      "description": "Validation Error",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/HTTPValidationError"
+        }
+       }
+      }
+     }
+    }
+   },
+   "patch": {
+    "tags": [
+     "Жанры"
+    ],
+    "summary": "Обновить жанр (PATCH)",
+    "description": "Частичное обновление жанра. При смене `name` — проверяется уникальность.\n\n- **200 OK** — обновлено\n- **404** — жанр не найден\n- **409** — новое название уже занято\n- **422** — ошибка валидации",
+    "operationId": "patch_genre_genres__genre_id__patch",
+    "parameters": [
+     {
+      "name": "genre_id",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "integer",
+       "title": "Genre Id"
+      }
+     },
+     {
+      "name": "Lang",
+      "in": "header",
+      "required": false,
+      "schema": {
+       "type": "string",
+       "enum": [
+        "en",
+        "ru"
+       ],
+       "default": "en"
+      },
+      "description": "Response language: `en` (default) or `ru`"
+     }
+    ],
+    "requestBody": {
+     "required": true,
+     "content": {
+      "application/json": {
+       "schema": {
+        "$ref": "#/components/schemas/GenrePatch"
+       }
+      }
+     }
+    },
+    "responses": {
+     "200": {
+      "description": "Обновлённые данные жанра",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/GenreOut"
+        }
+       }
+      }
+     },
+     "404": {
+      "description": "🔍 Not Found — ресурс с указанным ID не существует",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/ErrorDetail"
+        }
+       }
+      }
+     },
+     "409": {
+      "description": "⚠️ Conflict — конфликт данных: дубликат уникального поля или нарушение бизнес-правила",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/ErrorDetail"
+        }
+       }
+      }
+     },
+     "422": {
+      "description": "❗ Unprocessable Entity — данные синтаксически корректны, но не прошли валидацию (неверный тип, диапазон, отсутствует обязательное поле)"
+     }
+    }
+   },
+   "delete": {
+    "tags": [
+     "Жанры"
+    ],
+    "summary": "Удалить жанр",
+    "description": "- **204 No Content** — удалено\n- **404** — жанр не найден\n- **409 Conflict** — у жанра есть привязанные книги",
+    "operationId": "delete_genre_genres__genre_id__delete",
+    "parameters": [
+     {
+      "name": "genre_id",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "integer",
+       "title": "Genre Id"
+      }
+     },
+     {
+      "name": "Lang",
+      "in": "header",
+      "required": false,
+      "schema": {
+       "type": "string",
+       "enum": [
+        "en",
+        "ru"
+       ],
+       "default": "en"
+      },
+      "description": "Response language: `en` (default) or `ru`"
+     }
+    ],
+    "responses": {
+     "204": {
+      "description": "Successful Response"
+     },
+     "404": {
+      "description": "🔍 Not Found — ресурс с указанным ID не существует",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/ErrorDetail"
+        }
+       }
+      }
+     },
+     "409": {
+      "description": "⚠️ Conflict — конфликт данных: дубликат уникального поля или нарушение бизнес-правила",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/ErrorDetail"
+        }
+       }
+      }
+     },
+     "422": {
+      "description": "Validation Error",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/HTTPValidationError"
+        }
+       }
+      }
+     }
+    }
+   }
+  },
+  "/books": {
+   "get": {
+    "tags": [
+     "Книги"
+    ],
+    "summary": "Получить список книг",
+    "description": "### GET — получение коллекции\nВозвращает каталог книг. Метод GET **безопасный** и **идемпотентный**.\n\n**Фильтрация:** `author_id`, `genre_id`, `min_price`, `max_price`, `in_stock`, `search`\n**Сортировка:** `sort_by` (price | title | published_year) + `sort_order` (asc | desc)\n**Пагинация:** `skip` + `limit`. Ответ: `{\"items\": [...], \"total\": N}`.",
+    "operationId": "list_books_books_get",
+    "parameters": [
+     {
+      "name": "skip",
+      "in": "query",
+      "required": false,
+      "schema": {
+       "type": "integer",
+       "minimum": 0,
+       "description": "Сколько записей пропустить",
+       "default": 0,
+       "title": "Skip"
+      },
+      "description": "Сколько записей пропустить"
+     },
+     {
+      "name": "limit",
+      "in": "query",
+      "required": false,
+      "schema": {
+       "type": "integer",
+       "maximum": 100,
+       "minimum": 1,
+       "description": "Максимум записей (1–100)",
+       "default": 20,
+       "title": "Limit"
+      },
+      "description": "Максимум записей (1–100)"
+     },
+     {
+      "name": "author_id",
+      "in": "query",
+      "required": false,
+      "schema": {
+       "anyOf": [
+        {
+         "type": "integer"
+        },
+        {
+         "type": "null"
+        }
+       ],
+       "description": "Фильтр: только книги этого автора",
+       "title": "Author Id"
+      },
+      "description": "Фильтр: только книги этого автора"
+     },
+     {
+      "name": "genre_id",
+      "in": "query",
+      "required": false,
+      "schema": {
+       "anyOf": [
+        {
+         "type": "integer"
+        },
+        {
+         "type": "null"
+        }
+       ],
+       "description": "Фильтр: только книги этого жанра",
+       "title": "Genre Id"
+      },
+      "description": "Фильтр: только книги этого жанра"
+     },
+     {
+      "name": "min_price",
+      "in": "query",
+      "required": false,
+      "schema": {
+       "anyOf": [
+        {
+         "type": "number",
+         "minimum": 0.0
+        },
+        {
+         "type": "null"
+        }
+       ],
+       "description": "Цена от (включительно)",
+       "title": "Min Price"
+      },
+      "description": "Цена от (включительно)"
+     },
+     {
+      "name": "max_price",
+      "in": "query",
+      "required": false,
+      "schema": {
+       "anyOf": [
+        {
+         "type": "number",
+         "minimum": 0.0
+        },
+        {
+         "type": "null"
+        }
+       ],
+       "description": "Цена до (включительно)",
+       "title": "Max Price"
+      },
+      "description": "Цена до (включительно)"
+     },
+     {
+      "name": "in_stock",
+      "in": "query",
+      "required": false,
+      "schema": {
+       "anyOf": [
+        {
+         "type": "boolean"
+        },
+        {
+         "type": "null"
+        }
+       ],
+       "description": "true — только в наличии (stock > 0)",
+       "title": "In Stock"
+      },
+      "description": "true — только в наличии (stock > 0)"
+     },
+     {
+      "name": "search",
+      "in": "query",
+      "required": false,
+      "schema": {
+       "anyOf": [
+        {
+         "type": "string"
+        },
+        {
+         "type": "null"
+        }
+       ],
+       "description": "Поиск по названию (регистронезависимый)",
+       "title": "Search"
+      },
+      "description": "Поиск по названию (регистронезависимый)"
+     },
+     {
+      "name": "sort_by",
+      "in": "query",
+      "required": false,
+      "schema": {
+       "anyOf": [
+        {
+         "type": "string"
+        },
+        {
+         "type": "null"
+        }
+       ],
+       "description": "Сортировка: price | title | published_year",
+       "title": "Sort By"
+      },
+      "description": "Сортировка: price | title | published_year"
+     },
+     {
+      "name": "sort_order",
+      "in": "query",
+      "required": false,
+      "schema": {
+       "type": "string",
+       "description": "Направление: asc или desc",
+       "default": "asc",
+       "title": "Sort Order"
+      },
+      "description": "Направление: asc или desc"
+     },
+     {
+      "name": "Lang",
+      "in": "header",
+      "required": false,
+      "schema": {
+       "type": "string",
+       "enum": [
+        "en",
+        "ru"
+       ],
+       "default": "en"
+      },
+      "description": "Response language: `en` (default) or `ru`"
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "Список книг с пагинацией",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/PaginatedResponse_BookOut_"
+        }
+       }
+      }
+     },
+     "422": {
+      "description": "❗ Unprocessable Entity — данные синтаксически корректны, но не прошли валидацию (неверный тип, диапазон, отсутствует обязательное поле)"
+     }
+    }
+   },
+   "post": {
+    "tags": [
+     "Книги"
+    ],
+    "summary": "Создать книгу",
+    "description": "### POST — создание ресурса\nДобавляет новую книгу. POST **не идемпотентен**.\n\n**Обязательные поля:** `title`, `isbn` (13 цифр), `price` (≥ 0)\n**Необязательные:** `author_id`, `genre_id`, `stock`, `description`, `published_year`\n\n- **201 Created** — книга создана\n- **409 Conflict** — ISBN уже занят другой книгой\n- **422** — отсутствует обязательное поле или неверный формат ISBN / год",
+    "operationId": "create_book_books_post",
+    "requestBody": {
+     "required": true,
+     "content": {
+      "application/json": {
+       "schema": {
+        "$ref": "#/components/schemas/BookCreate"
+       }
+      }
+     }
+    },
+    "responses": {
+     "201": {
+      "description": "Книга создана",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/BookOut"
+        }
+       }
+      }
+     },
+     "409": {
+      "description": "⚠️ Conflict — конфликт данных: дубликат уникального поля или нарушение бизнес-правила",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/ErrorDetail"
+        }
+       }
+      }
+     },
+     "422": {
+      "description": "❗ Unprocessable Entity — данные синтаксически корректны, но не прошли валидацию (неверный тип, диапазон, отсутствует обязательное поле)"
+     }
+    },
+    "parameters": [
+     {
+      "name": "Lang",
+      "in": "header",
+      "required": false,
+      "schema": {
+       "type": "string",
+       "enum": [
+        "en",
+        "ru"
+       ],
+       "default": "en"
+      },
+      "description": "Response language: `en` (default) or `ru`"
+     }
+    ]
+   }
+  },
+  "/books/{book_id}": {
+   "get": {
+    "tags": [
+     "Книги"
+    ],
+    "summary": "Получить книгу по ID",
+    "description": "Возвращает полные данные одной книги.\n\n- **200 OK** — книга найдена\n- **404 Not Found** — книги с таким ID не существует",
+    "operationId": "get_book_books__book_id__get",
+    "parameters": [
+     {
+      "name": "book_id",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "integer",
+       "title": "Book Id"
+      }
+     },
+     {
+      "name": "Lang",
+      "in": "header",
+      "required": false,
+      "schema": {
+       "type": "string",
+       "enum": [
+        "en",
+        "ru"
+       ],
+       "default": "en"
+      },
+      "description": "Response language: `en` (default) or `ru`"
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "Данные книги",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/BookOut"
+        }
+       }
+      }
+     },
+     "404": {
+      "description": "🔍 Not Found — ресурс с указанным ID не существует",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/ErrorDetail"
+        }
+       }
+      }
+     },
+     "422": {
+      "description": "Validation Error",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/HTTPValidationError"
+        }
+       }
+      }
+     }
+    }
+   },
+   "put": {
+    "tags": [
+     "Книги"
+    ],
+    "summary": "Полное обновление книги (PUT)",
+    "description": "### PUT — полная замена\nЗаменяет **все поля** книги. PUT **идемпотентен**.\n\n⚠️ Все обязательные поля (`title`, `isbn`, `price`, `stock`) обязательны — иначе **422**.\n\n- **200 OK** — обновлено\n- **404** — книга не найдена\n- **409** — ISBN уже принадлежит другой книге\n- **422** — ошибка валидации",
+    "operationId": "update_book_books__book_id__put",
+    "parameters": [
+     {
+      "name": "book_id",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "integer",
+       "title": "Book Id"
+      }
+     },
+     {
+      "name": "Lang",
+      "in": "header",
+      "required": false,
+      "schema": {
+       "type": "string",
+       "enum": [
+        "en",
+        "ru"
+       ],
+       "default": "en"
+      },
+      "description": "Response language: `en` (default) or `ru`"
+     }
+    ],
+    "requestBody": {
+     "required": true,
+     "content": {
+      "application/json": {
+       "schema": {
+        "$ref": "#/components/schemas/BookUpdate"
+       }
+      }
+     }
+    },
+    "responses": {
+     "200": {
+      "description": "Обновлённые данные книги",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/BookOut"
+        }
+       }
+      }
+     },
+     "404": {
+      "description": "🔍 Not Found — ресурс с указанным ID не существует",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/ErrorDetail"
+        }
+       }
+      }
+     },
+     "409": {
+      "description": "⚠️ Conflict — конфликт данных: дубликат уникального поля или нарушение бизнес-правила",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/ErrorDetail"
+        }
+       }
+      }
+     },
+     "422": {
+      "description": "❗ Unprocessable Entity — данные синтаксически корректны, но не прошли валидацию (неверный тип, диапазон, отсутствует обязательное поле)"
+     }
+    }
+   },
+   "patch": {
+    "tags": [
+     "Книги"
+    ],
+    "summary": "Частичное обновление книги (PATCH)",
+    "description": "### PATCH — частичное изменение\nОбновляет только переданные поля. Например `{\"price\": 599}`.\n\n- **200 OK** — обновлено\n- **404** — книга не найдена\n- **409** — ISBN занят\n- **422** — ошибка валидации",
+    "operationId": "patch_book_books__book_id__patch",
+    "parameters": [
+     {
+      "name": "book_id",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "integer",
+       "title": "Book Id"
+      }
+     },
+     {
+      "name": "Lang",
+      "in": "header",
+      "required": false,
+      "schema": {
+       "type": "string",
+       "enum": [
+        "en",
+        "ru"
+       ],
+       "default": "en"
+      },
+      "description": "Response language: `en` (default) or `ru`"
+     }
+    ],
+    "requestBody": {
+     "required": true,
+     "content": {
+      "application/json": {
+       "schema": {
+        "$ref": "#/components/schemas/BookPatch"
+       }
+      }
+     }
+    },
+    "responses": {
+     "200": {
+      "description": "Обновлённые данные книги",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/BookOut"
+        }
+       }
+      }
+     },
+     "404": {
+      "description": "🔍 Not Found — ресурс с указанным ID не существует",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/ErrorDetail"
+        }
+       }
+      }
+     },
+     "409": {
+      "description": "⚠️ Conflict — конфликт данных: дубликат уникального поля или нарушение бизнес-правила",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/ErrorDetail"
+        }
+       }
+      }
+     },
+     "422": {
+      "description": "❗ Unprocessable Entity — данные синтаксически корректны, но не прошли валидацию (неверный тип, диапазон, отсутствует обязательное поле)"
+     }
+    }
+   },
+   "delete": {
+    "tags": [
+     "Книги"
+    ],
+    "summary": "Удалить книгу",
+    "description": "### DELETE — удаление\nУдаляет книгу. При успехе — **204 No Content** (тело пустое).\n\n- **204 No Content** — удалено\n- **404 Not Found** — книга не существует\n- **409 Conflict** — книга есть в заказах (нельзя удалить)",
+    "operationId": "delete_book_books__book_id__delete",
+    "parameters": [
+     {
+      "name": "book_id",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "integer",
+       "title": "Book Id"
+      }
+     },
+     {
+      "name": "Lang",
+      "in": "header",
+      "required": false,
+      "schema": {
+       "type": "string",
+       "enum": [
+        "en",
+        "ru"
+       ],
+       "default": "en"
+      },
+      "description": "Response language: `en` (default) or `ru`"
+     }
+    ],
+    "responses": {
+     "204": {
+      "description": "Successful Response"
+     },
+     "404": {
+      "description": "🔍 Not Found — ресурс с указанным ID не существует",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/ErrorDetail"
+        }
+       }
+      }
+     },
+     "409": {
+      "description": "⚠️ Conflict — конфликт данных: дубликат уникального поля или нарушение бизнес-правила",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/ErrorDetail"
+        }
+       }
+      }
+     },
+     "422": {
+      "description": "Validation Error",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/HTTPValidationError"
+        }
+       }
+      }
+     }
+    }
+   }
+  },
+  "/books/{book_id}/reviews": {
+   "get": {
+    "tags": [
+     "Книги"
+    ],
+    "summary": "Рецензии на книгу",
+    "description": "### GET /{id}/reviews — вложенный ресурс\nВозвращает рецензии на конкретную книгу. Паттерн nested resource в REST.\n\n- **200 OK** — список рецензий\n- **404 Not Found** — книга не найдена",
+    "operationId": "get_book_reviews_books__book_id__reviews_get",
+    "parameters": [
+     {
+      "name": "book_id",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "integer",
+       "title": "Book Id"
+      }
+     },
+     {
+      "name": "skip",
+      "in": "query",
+      "required": false,
+      "schema": {
+       "type": "integer",
+       "minimum": 0,
+       "default": 0,
+       "title": "Skip"
+      }
+     },
+     {
+      "name": "limit",
+      "in": "query",
+      "required": false,
+      "schema": {
+       "type": "integer",
+       "maximum": 100,
+       "minimum": 1,
+       "default": 20,
+       "title": "Limit"
+      }
+     },
+     {
+      "name": "Lang",
+      "in": "header",
+      "required": false,
+      "schema": {
+       "type": "string",
+       "enum": [
+        "en",
+        "ru"
+       ],
+       "default": "en"
+      },
+      "description": "Response language: `en` (default) or `ru`"
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "Рецензии на книгу с пагинацией",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/PaginatedResponse_ReviewOut_"
+        }
+       }
+      }
+     },
+     "404": {
+      "description": "🔍 Not Found — ресурс с указанным ID не существует",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/ErrorDetail"
+        }
+       }
+      }
+     },
+     "422": {
+      "description": "Validation Error",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/HTTPValidationError"
+        }
+       }
+      }
+     }
+    }
+   }
+  },
+  "/readers": {
+   "post": {
+    "tags": [
+     "Читатели"
+    ],
+    "summary": "Зарегистрироваться",
+    "description": "### POST — регистрация нового читателя\n\nСоздаёт профиль и возвращает персональный **токен**.\n\n💡 Если в запросе уже передан ваш Bearer-токен из `POST /auth/token`, то этот же токен будет привязан к новому профилю и вернётся в ответе — **не нужно ничего менять в Authorize**, ваш прогресс продолжит копиться на тот же токен.\n\nЕсли запрос пришёл без токена, выдаётся новый.\n\nТокен передаётся как `Authorization: Bearer <token>` или `X-Reader-Token` для авторизованных запросов.\n\n- **201 Created** — читатель создан, в ответе поле `token`\n- **409 Conflict** — `username` или `email` уже заняты\n- **422** — отсутствуют обязательные поля",
+    "operationId": "register_reader_readers_post",
+    "parameters": [
+     {
+      "name": "authorization",
+      "in": "header",
+      "required": false,
+      "schema": {
+       "anyOf": [
+        {
+         "type": "string"
+        },
+        {
+         "type": "null"
+        }
+       ],
+       "description": "Authorization: Bearer <token>",
+       "title": "Authorization"
+      },
+      "description": "Authorization: Bearer <token>"
+     },
+     {
+      "name": "x-reader-token",
+      "in": "header",
+      "required": false,
+      "schema": {
+       "anyOf": [
+        {
+         "type": "string"
+        },
+        {
+         "type": "null"
+        }
+       ],
+       "description": "Токен читателя",
+       "title": "X-Reader-Token"
+      },
+      "description": "Токен читателя"
+     },
+     {
+      "name": "Lang",
+      "in": "header",
+      "required": false,
+      "schema": {
+       "type": "string",
+       "enum": [
+        "en",
+        "ru"
+       ],
+       "default": "en"
+      },
+      "description": "Response language: `en` (default) or `ru`"
+     }
+    ],
+    "requestBody": {
+     "required": true,
+     "content": {
+      "application/json": {
+       "schema": {
+        "$ref": "#/components/schemas/ReaderCreate"
+       }
+      }
+     }
+    },
+    "responses": {
+     "201": {
+      "description": "Читатель зарегистрирован",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/ReaderCreatedOut"
+        }
+       }
+      }
+     },
+     "409": {
+      "description": "⚠️ Conflict — конфликт данных: дубликат уникального поля или нарушение бизнес-правила",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/ErrorDetail"
+        }
+       }
+      }
+     },
+     "422": {
+      "description": "❗ Unprocessable Entity — данные синтаксически корректны, но не прошли валидацию (неверный тип, диапазон, отсутствует обязательное поле)"
+     }
+    }
+   }
+  },
+  "/readers/{reader_id}": {
+   "get": {
+    "tags": [
+     "Читатели"
+    ],
+    "summary": "Профиль читателя",
+    "description": "Публичный эндпоинт — токен не нужен.\n\n- **200 OK** — профиль найден\n- **404 Not Found** — читатель не существует",
+    "operationId": "get_reader_readers__reader_id__get",
+    "parameters": [
+     {
+      "name": "reader_id",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "integer",
+       "title": "Reader Id"
+      }
+     },
+     {
+      "name": "Lang",
+      "in": "header",
+      "required": false,
+      "schema": {
+       "type": "string",
+       "enum": [
+        "en",
+        "ru"
+       ],
+       "default": "en"
+      },
+      "description": "Response language: `en` (default) or `ru`"
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "Данные профиля читателя",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/ReaderOut"
+        }
+       }
+      }
+     },
+     "404": {
+      "description": "🔍 Not Found — ресурс с указанным ID не существует",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/ErrorDetail"
+        }
+       }
+      }
+     },
+     "422": {
+      "description": "Validation Error",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/HTTPValidationError"
+        }
+       }
+      }
+     }
+    }
+   },
+   "patch": {
+    "tags": [
+     "Читатели"
+    ],
+    "summary": "Обновить профиль",
+    "description": "Обновляет `bio` читателя. Требует авторизацию: `Authorization: Bearer <token>` или `X-Reader-Token`.\n\n⚠️ **403 vs 401:** 401 — токен не передан; 403 — токен есть, но читатель пытается изменить чужой профиль.\n\n- **200 OK** — профиль обновлён\n- **401** — токен не передан\n- **403 Forbidden** — это чужой профиль\n- **404** — читатель не найден\n- **422** — ошибка валидации",
+    "operationId": "patch_reader_readers__reader_id__patch",
+    "parameters": [
+     {
+      "name": "reader_id",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "integer",
+       "title": "Reader Id"
+      }
+     },
+     {
+      "name": "authorization",
+      "in": "header",
+      "required": false,
+      "schema": {
+       "anyOf": [
+        {
+         "type": "string"
+        },
+        {
+         "type": "null"
+        }
+       ],
+       "description": "Bearer token: 'Authorization: Bearer <token>'",
+       "title": "Authorization"
+      },
+      "description": "Bearer token: 'Authorization: Bearer <token>'"
+     },
+     {
+      "name": "x-reader-token",
+      "in": "header",
+      "required": false,
+      "schema": {
+       "anyOf": [
+        {
+         "type": "string"
+        },
+        {
+         "type": "null"
+        }
+       ],
+       "description": "Reader token / Токен читателя",
+       "title": "X-Reader-Token"
+      },
+      "description": "Reader token / Токен читателя"
+     },
+     {
+      "name": "Lang",
+      "in": "header",
+      "required": false,
+      "schema": {
+       "type": "string",
+       "enum": [
+        "en",
+        "ru"
+       ],
+       "default": "en"
+      },
+      "description": "Response language: `en` (default) or `ru`"
+     }
+    ],
+    "requestBody": {
+     "required": true,
+     "content": {
+      "application/json": {
+       "schema": {
+        "$ref": "#/components/schemas/ReaderPatch"
+       }
+      }
+     }
+    },
+    "responses": {
+     "200": {
+      "description": "Обновлённый профиль",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/ReaderOut"
+        }
+       }
+      }
+     },
+     "401": {
+      "description": "🔒 Unauthorized — отсутствует заголовок X-Reader-Token. Зарегистрируйся через POST /readers и получи токен.",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/ErrorDetail"
+        }
+       }
+      }
+     },
+     "403": {
+      "description": "🚫 Forbidden — токен есть, но нет прав на этот ресурс. Отличие от 401: авторизован, но не авторизован на конкретный объект.",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/ErrorDetail"
+        }
+       }
+      }
+     },
+     "404": {
+      "description": "🔍 Not Found — ресурс с указанным ID не существует",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/ErrorDetail"
+        }
+       }
+      }
+     },
+     "422": {
+      "description": "❗ Unprocessable Entity — данные синтаксически корректны, но не прошли валидацию (неверный тип, диапазон, отсутствует обязательное поле)"
+     }
+    }
+   }
+  },
+  "/readers/{reader_id}/orders": {
+   "get": {
+    "tags": [
+     "Читатели"
+    ],
+    "summary": "Заказы читателя",
+    "description": "Возвращает заказы читателя с пагинацией. Требует `X-Reader-Token` владельца.\n\n- **200 OK** — список заказов\n- **401** — токен не передан\n- **403 Forbidden** — попытка просмотра чужих заказов\n- **422** — ошибка параметров пагинации",
+    "operationId": "get_reader_orders_readers__reader_id__orders_get",
+    "parameters": [
+     {
+      "name": "reader_id",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "integer",
+       "title": "Reader Id"
+      }
+     },
+     {
+      "name": "skip",
+      "in": "query",
+      "required": false,
+      "schema": {
+       "type": "integer",
+       "minimum": 0,
+       "default": 0,
+       "title": "Skip"
+      }
+     },
+     {
+      "name": "limit",
+      "in": "query",
+      "required": false,
+      "schema": {
+       "type": "integer",
+       "maximum": 100,
+       "minimum": 1,
+       "default": 20,
+       "title": "Limit"
+      }
+     },
+     {
+      "name": "authorization",
+      "in": "header",
+      "required": false,
+      "schema": {
+       "anyOf": [
+        {
+         "type": "string"
+        },
+        {
+         "type": "null"
+        }
+       ],
+       "description": "Bearer token: 'Authorization: Bearer <token>'",
+       "title": "Authorization"
+      },
+      "description": "Bearer token: 'Authorization: Bearer <token>'"
+     },
+     {
+      "name": "x-reader-token",
+      "in": "header",
+      "required": false,
+      "schema": {
+       "anyOf": [
+        {
+         "type": "string"
+        },
+        {
+         "type": "null"
+        }
+       ],
+       "description": "Reader token / Токен читателя",
+       "title": "X-Reader-Token"
+      },
+      "description": "Reader token / Токен читателя"
+     },
+     {
+      "name": "Lang",
+      "in": "header",
+      "required": false,
+      "schema": {
+       "type": "string",
+       "enum": [
+        "en",
+        "ru"
+       ],
+       "default": "en"
+      },
+      "description": "Response language: `en` (default) or `ru`"
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "Список заказов читателя",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/PaginatedResponse_OrderOut_"
+        }
+       }
+      }
+     },
+     "401": {
+      "description": "🔒 Unauthorized — отсутствует заголовок X-Reader-Token. Зарегистрируйся через POST /readers и получи токен.",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/ErrorDetail"
+        }
+       }
+      }
+     },
+     "403": {
+      "description": "🚫 Forbidden — токен есть, но нет прав на этот ресурс. Отличие от 401: авторизован, но не авторизован на конкретный объект.",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/ErrorDetail"
+        }
+       }
+      }
+     },
+     "422": {
+      "description": "❗ Unprocessable Entity — данные синтаксически корректны, но не прошли валидацию (неверный тип, диапазон, отсутствует обязательное поле)"
+     }
+    }
+   }
+  },
+  "/readers/{reader_id}/reviews": {
+   "get": {
+    "tags": [
+     "Читатели"
+    ],
+    "summary": "Рецензии читателя",
+    "description": "Публичный эндпоинт — возвращает все рецензии, оставленные читателем.\n\n- **200 OK** — список рецензий\n- **422** — ошибка параметров пагинации",
+    "operationId": "get_reader_reviews_readers__reader_id__reviews_get",
+    "parameters": [
+     {
+      "name": "reader_id",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "integer",
+       "title": "Reader Id"
+      }
+     },
+     {
+      "name": "skip",
+      "in": "query",
+      "required": false,
+      "schema": {
+       "type": "integer",
+       "minimum": 0,
+       "default": 0,
+       "title": "Skip"
+      }
+     },
+     {
+      "name": "limit",
+      "in": "query",
+      "required": false,
+      "schema": {
+       "type": "integer",
+       "maximum": 100,
+       "minimum": 1,
+       "default": 20,
+       "title": "Limit"
+      }
+     },
+     {
+      "name": "Lang",
+      "in": "header",
+      "required": false,
+      "schema": {
+       "type": "string",
+       "enum": [
+        "en",
+        "ru"
+       ],
+       "default": "en"
+      },
+      "description": "Response language: `en` (default) or `ru`"
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "Рецензии читателя",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/PaginatedResponse_ReviewOut_"
+        }
+       }
+      }
+     },
+     "422": {
+      "description": "❗ Unprocessable Entity — данные синтаксически корректны, но не прошли валидацию (неверный тип, диапазон, отсутствует обязательное поле)"
+     }
+    }
+   }
+  },
+  "/readers/{reader_id}/wishlist": {
+   "get": {
+    "tags": [
+     "Читатели"
+    ],
+    "summary": "Список желаний",
+    "description": "Публичный эндпоинт — возвращает список желаний читателя.\n\n- **200 OK** — список книг в wishlist\n- **422** — ошибка параметров пагинации",
+    "operationId": "get_wishlist_readers__reader_id__wishlist_get",
+    "parameters": [
+     {
+      "name": "reader_id",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "integer",
+       "title": "Reader Id"
+      }
+     },
+     {
+      "name": "skip",
+      "in": "query",
+      "required": false,
+      "schema": {
+       "type": "integer",
+       "minimum": 0,
+       "default": 0,
+       "title": "Skip"
+      }
+     },
+     {
+      "name": "limit",
+      "in": "query",
+      "required": false,
+      "schema": {
+       "type": "integer",
+       "maximum": 200,
+       "minimum": 1,
+       "default": 50,
+       "title": "Limit"
+      }
+     },
+     {
+      "name": "Lang",
+      "in": "header",
+      "required": false,
+      "schema": {
+       "type": "string",
+       "enum": [
+        "en",
+        "ru"
+       ],
+       "default": "en"
+      },
+      "description": "Response language: `en` (default) or `ru`"
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "Список желаний читателя",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/PaginatedResponse_WishlistItemOut_"
+        }
+       }
+      }
+     },
+     "422": {
+      "description": "❗ Unprocessable Entity — данные синтаксически корректны, но не прошли валидацию (неверный тип, диапазон, отсутствует обязательное поле)"
+     }
+    }
+   },
+   "post": {
+    "tags": [
+     "Читатели"
+    ],
+    "summary": "Добавить книгу в список желаний",
+    "description": "Добавляет книгу в список желаний. Требует `X-Reader-Token`.\n\n- **201 Created** — книга добавлена\n- **401** — токен не передан\n- **403** — попытка добавить в чужой wishlist\n- **409 Conflict** — книга уже в списке\n- **422** — книга не найдена",
+    "operationId": "add_to_wishlist_readers__reader_id__wishlist_post",
+    "parameters": [
+     {
+      "name": "reader_id",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "integer",
+       "title": "Reader Id"
+      }
+     },
+     {
+      "name": "authorization",
+      "in": "header",
+      "required": false,
+      "schema": {
+       "anyOf": [
+        {
+         "type": "string"
+        },
+        {
+         "type": "null"
+        }
+       ],
+       "description": "Bearer token: 'Authorization: Bearer <token>'",
+       "title": "Authorization"
+      },
+      "description": "Bearer token: 'Authorization: Bearer <token>'"
+     },
+     {
+      "name": "x-reader-token",
+      "in": "header",
+      "required": false,
+      "schema": {
+       "anyOf": [
+        {
+         "type": "string"
+        },
+        {
+         "type": "null"
+        }
+       ],
+       "description": "Reader token / Токен читателя",
+       "title": "X-Reader-Token"
+      },
+      "description": "Reader token / Токен читателя"
+     },
+     {
+      "name": "Lang",
+      "in": "header",
+      "required": false,
+      "schema": {
+       "type": "string",
+       "enum": [
+        "en",
+        "ru"
+       ],
+       "default": "en"
+      },
+      "description": "Response language: `en` (default) or `ru`"
+     }
+    ],
+    "requestBody": {
+     "required": true,
+     "content": {
+      "application/json": {
+       "schema": {
+        "$ref": "#/components/schemas/WishlistItemIn"
+       }
+      }
+     }
+    },
+    "responses": {
+     "201": {
+      "description": "Книга добавлена в список желаний",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/WishlistItemOut"
+        }
+       }
+      }
+     },
+     "401": {
+      "description": "🔒 Unauthorized — отсутствует заголовок X-Reader-Token. Зарегистрируйся через POST /readers и получи токен.",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/ErrorDetail"
+        }
+       }
+      }
+     },
+     "403": {
+      "description": "🚫 Forbidden — токен есть, но нет прав на этот ресурс. Отличие от 401: авторизован, но не авторизован на конкретный объект.",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/ErrorDetail"
+        }
+       }
+      }
+     },
+     "409": {
+      "description": "⚠️ Conflict — конфликт данных: дубликат уникального поля или нарушение бизнес-правила",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/ErrorDetail"
+        }
+       }
+      }
+     },
+     "422": {
+      "description": "❗ Unprocessable Entity — данные синтаксически корректны, но не прошли валидацию (неверный тип, диапазон, отсутствует обязательное поле)"
+     }
+    }
+   }
+  },
+  "/reviews": {
+   "post": {
+    "tags": [
+     "Рецензии"
+    ],
+    "summary": "Оставить рецензию",
+    "description": "### POST — создание с авторизацией\nСоздаёт рецензию на книгу. Требует `X-Reader-Token`.\n\n- **201 Created** — рецензия создана\n- **401 Unauthorized** — заголовок `X-Reader-Token` не передан\n- **403 Forbidden** — токен недействителен\n- **409 Conflict** — ты уже оставлял рецензию на эту книгу\n- **422** — рейтинг вне диапазона 1–5 или книга не найдена\n\n⚠️ **401 vs 403:** 401 — токен не передан вообще; 403 — токен есть, но не работает.",
+    "operationId": "create_review_reviews_post",
+    "parameters": [
+     {
+      "name": "authorization",
+      "in": "header",
+      "required": false,
+      "schema": {
+       "anyOf": [
+        {
+         "type": "string"
+        },
+        {
+         "type": "null"
+        }
+       ],
+       "description": "Bearer token: 'Authorization: Bearer <token>'",
+       "title": "Authorization"
+      },
+      "description": "Bearer token: 'Authorization: Bearer <token>'"
+     },
+     {
+      "name": "x-reader-token",
+      "in": "header",
+      "required": false,
+      "schema": {
+       "anyOf": [
+        {
+         "type": "string"
+        },
+        {
+         "type": "null"
+        }
+       ],
+       "description": "Reader token / Токен читателя",
+       "title": "X-Reader-Token"
+      },
+      "description": "Reader token / Токен читателя"
+     },
+     {
+      "name": "Lang",
+      "in": "header",
+      "required": false,
+      "schema": {
+       "type": "string",
+       "enum": [
+        "en",
+        "ru"
+       ],
+       "default": "en"
+      },
+      "description": "Response language: `en` (default) or `ru`"
+     }
+    ],
+    "requestBody": {
+     "required": true,
+     "content": {
+      "application/json": {
+       "schema": {
+        "$ref": "#/components/schemas/ReviewCreate"
+       }
+      }
+     }
+    },
+    "responses": {
+     "201": {
+      "description": "Рецензия создана",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/ReviewOut"
+        }
+       }
+      }
+     },
+     "401": {
+      "description": "🔒 Unauthorized — отсутствует заголовок X-Reader-Token. Зарегистрируйся через POST /readers и получи токен.",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/ErrorDetail"
+        }
+       }
+      }
+     },
+     "403": {
+      "description": "🚫 Forbidden — токен есть, но нет прав на этот ресурс. Отличие от 401: авторизован, но не авторизован на конкретный объект.",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/ErrorDetail"
+        }
+       }
+      }
+     },
+     "409": {
+      "description": "⚠️ Conflict — конфликт данных: дубликат уникального поля или нарушение бизнес-правила",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/ErrorDetail"
+        }
+       }
+      }
+     },
+     "422": {
+      "description": "❗ Unprocessable Entity — данные синтаксически корректны, но не прошли валидацию (неверный тип, диапазон, отсутствует обязательное поле)"
+     }
+    }
+   }
+  },
+  "/practice/temperature": {
+   "get": {
+    "tags": [
+     "Практика: поиск багов"
+    ],
+    "summary": "🐞 #8 Цельсий → Фаренгейт",
+    "description": "**Контракт:** переводит градусы Цельсия в Фаренгейты по формуле `F = C × 9/5 + 32`.\n\n`celsius=100` → `212`. `celsius=0` → `32`.",
+    "operationId": "temperature_practice_temperature_get",
+    "parameters": [
+     {
+      "name": "celsius",
+      "in": "query",
+      "required": true,
+      "schema": {
+       "type": "number",
+       "title": "Celsius"
+      }
+     },
+     {
+      "name": "Lang",
+      "in": "header",
+      "required": false,
+      "schema": {
+       "type": "string",
+       "enum": [
+        "en",
+        "ru"
+       ],
+       "default": "en"
+      },
+      "description": "Response language: `en` (default) or `ru`"
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "Successful Response",
+      "content": {
+       "application/json": {
+        "schema": {}
+       }
+      }
+     },
+     "422": {
+      "description": "Validation Error",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/HTTPValidationError"
+        }
+       }
+      }
+     }
+    }
+   }
+  },
+  "/practice/transfer": {
+   "post": {
+    "tags": [
+     "Практика: поиск багов"
+    ],
+    "summary": "🐞 #12 Перевод средств",
+    "description": "**Контракт:** нельзя перевести больше, чем есть на балансе. Если `amount > from_balance` → **422**. Иначе возвращает новый баланс.",
+    "operationId": "transfer_practice_transfer_post",
+    "requestBody": {
+     "content": {
+      "application/json": {
+       "schema": {
+        "$ref": "#/components/schemas/TransferIn"
+       }
+      }
+     },
+     "required": true
+    },
+    "responses": {
+     "200": {
+      "description": "Successful Response",
+      "content": {
+       "application/json": {
+        "schema": {}
+       }
+      }
+     },
+     "422": {
+      "description": "Validation Error",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/HTTPValidationError"
+        }
+       }
+      }
+     }
+    },
+    "parameters": [
+     {
+      "name": "Lang",
+      "in": "header",
+      "required": false,
+      "schema": {
+       "type": "string",
+       "enum": [
+        "en",
+        "ru"
+       ],
+       "default": "en"
+      },
+      "description": "Response language: `en` (default) or `ru`"
+     }
+    ]
+   }
+  },
+  "/practice/user/{user_id}": {
+   "get": {
+    "tags": [
+     "Практика: поиск багов"
+    ],
+    "summary": "🐞 #13 Публичный профиль",
+    "description": "**Контракт:** возвращает **публичный** профиль: только `id` и `name`.\n\nПриватные поля (email, хеш пароля, роль) отдаваться клиенту не должны.",
+    "operationId": "practice_user_practice_user__user_id__get",
+    "parameters": [
+     {
+      "name": "user_id",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "integer",
+       "title": "User Id"
+      }
+     },
+     {
+      "name": "Lang",
+      "in": "header",
+      "required": false,
+      "schema": {
+       "type": "string",
+       "enum": [
+        "en",
+        "ru"
+       ],
+       "default": "en"
+      },
+      "description": "Response language: `en` (default) or `ru`"
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "Successful Response",
+      "content": {
+       "application/json": {
+        "schema": {}
+       }
+      }
+     },
+     "422": {
+      "description": "Validation Error",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/HTTPValidationError"
+        }
+       }
+      }
+     }
+    }
+   }
+  },
+  "/teapot": {
+   "get": {
+    "tags": [
+     "Пасхалки"
+    ],
+    "summary": "Я чайник ☕",
+    "description": "### 418 I'm a Teapot — RFC 2324\n\nЭтот эндпоинт **всегда** возвращает **418 I'm a Teapot** — стандарт, придуманный как первоапрельская шутка в 1998 году (RFC 2324, HTCPCP — HyperText Coffee Pot Control Protocol).\n\n418 означает, что сервер — чайник, и отказывается варить кофе.\n\n**Try it:** `GET /teapot`",
+    "operationId": "teapot_teapot_get",
+    "responses": {
+     "418": {
+      "description": "I'm a Teapot — the server refuses to brew coffee",
+      "content": {
+       "application/json": {
+        "schema": {}
+       }
+      }
+     }
+    },
+    "parameters": [
+     {
+      "name": "Lang",
+      "in": "header",
+      "required": false,
+      "schema": {
+       "type": "string",
+       "enum": [
+        "en",
+        "ru"
+       ],
+       "default": "en"
+      },
+      "description": "Response language: `en` (default) or `ru`"
+     }
+    ]
+   }
+  },
+  "/practice/slow": {
+   "get": {
+    "tags": [
+     "practice"
+    ],
+    "summary": "Медленный ответ",
+    "description": "**Контракт:** отвечает `200 {\"delayed\": N}` через `delay` секунд (0–30, по умолчанию 2). Полигон для проверки клиентских таймаутов."
+   }
+  },
+  "/practice/unstable": {
+   "get": {
+    "tags": [
+     "practice"
+    ],
+    "summary": "Нестабильный сервис",
+    "description": "**Контракт:** отвечает `200 {\"status\": \"ok\"}` — но с вероятностью ~30% падает с 500. Полигон для флаки-тестов: тот же запрос то проходит, то нет."
+   }
+  },
+  "/issues": {
+   "post": {
+    "tags": [
+     "issues"
+    ],
+    "summary": "Завести черновик бага",
+    "description": "**Контракт:** принимает черновик бага (в т.ч. от ИИ-анализатора). Создаётся со статусом `draft` — решение о судьбе бага принимает человек (human-in-the-loop). **201 Created**."
+   },
+   "get": {
+    "tags": [
+     "issues"
+    ],
+    "summary": "Список заведённых багов",
+    "description": "**Контракт:** возвращает список заведённых черновиков. Фильтры: `category`, `label`. **200 OK**."
+   }
+  }
+ }
+}

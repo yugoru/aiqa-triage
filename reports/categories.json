@@ -1,0 +1,26 @@
+[
+  {
+    "name": "Недоступность и таймауты",
+    "matchedStatuses": ["failed", "broken"],
+    "messageRegex": "(?s).*(ConnectionError|NameResolution|getaddrinfo|ReadTimeout|Read timed out|ConnectTimeout).*"
+  },
+  {
+    "name": "Нестабильность сервиса (5xx)",
+    "matchedStatuses": ["failed", "broken"],
+    "messageRegex": "(?s).*(нестабил|Internal Server Error|\\b500\\b).*"
+  },
+  {
+    "name": "Сломанная обвязка (фикстура авторизации)",
+    "matchedStatuses": ["failed", "broken"],
+    "messageRegex": "(?s).*auth/token.*"
+  },
+  {
+    "name": "Некорректные тест-данные (валидация 422)",
+    "matchedStatuses": ["failed", "broken"],
+    "messageRegex": "(?s).*(ISBN|Input should be|greater than or equal).*"
+  },
+  {
+    "name": "Несоответствие ответа контракту (assert)",
+    "matchedStatuses": ["failed"]
+  }
+]

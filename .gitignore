@@ -1,0 +1,21 @@
+__pycache__/
+.pytest_cache/
+.venv/
+.idea/
+*.pyc
+
+# Секреты — ключ модели не должен попасть в репозиторий
+.env
+
+# Артефакты прогона
+output/*
+!output/.gitkeep
+reports/report.xml
+reports/allure-results/
+.allure/
+
+# Материалы преподавателя — НЕ публикуем (спойлеры закладок и план занятия)
+TEACHER_NOTES_lesson6.md
+TEACHER_RUNBOOK.md
+plan_lesson6_triage.md
+challenger_endpoints.py
